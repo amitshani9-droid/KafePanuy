@@ -36,7 +36,7 @@ export default function Modal({ title, onClose, children, footer }: ModalProps) 
 
   return (
     <div className="fixed inset-0 z-[3000] flex items-end justify-center md:items-center md:p-6">
-      <div className="absolute inset-0 bg-ink/45 backdrop-blur-[2px] animate-fade-in" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] animate-fade-in" onClick={onClose} aria-hidden="true" />
       <div
         ref={panelRef}
         role="dialog"
@@ -56,7 +56,7 @@ export default function Modal({ title, onClose, children, footer }: ModalProps) 
             type="button"
             onClick={onClose}
             aria-label="סגור"
-            className="shrink-0 rounded-full bg-white p-2 text-forest shadow-sm ring-1 ring-forest/10 hover:bg-oat"
+            className="shrink-0 rounded-full bg-surface p-2 text-forest shadow-sm ring-1 ring-forest/10 hover:bg-oat"
           >
             <X size={18} />
           </button>

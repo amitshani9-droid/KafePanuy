@@ -23,7 +23,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
       aria-pressed={active}
       onClick={onClick}
       className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium whitespace-nowrap transition active:scale-95 ${
-        active ? 'bg-forest text-cream shadow-sm' : 'bg-white text-forest ring-1 ring-forest/15 hover:bg-oat'
+        active ? 'bg-forest text-cream shadow-sm' : 'bg-surface text-forest ring-1 ring-forest/15 hover:bg-oat'
       }`}
     >
       {children}
@@ -54,7 +54,7 @@ export default function FilterBar({
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
             placeholder="איפה בא לך קפה הבוקר?..."
-            className="w-full rounded-2xl border-0 bg-white py-2.5 ps-10 pe-9 text-base text-ink shadow-sm ring-1 ring-forest/10 placeholder:text-ink/40 focus:ring-2 focus:ring-forest focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+            className="w-full rounded-2xl border-0 bg-surface py-2.5 ps-10 pe-9 text-base text-ink shadow-sm ring-1 ring-forest/10 placeholder:text-ink/40 focus:ring-2 focus:ring-forest focus:outline-none [&::-webkit-search-cancel-button]:hidden"
           />
           {query && (
             <button
@@ -74,7 +74,7 @@ export default function FilterBar({
           <select
             value={sort}
             onChange={(e) => onSortChange(e.target.value as SortOption)}
-            className="h-full cursor-pointer appearance-none rounded-2xl border-0 bg-white py-2.5 ps-9 pe-4 text-sm font-medium text-forest shadow-sm ring-1 ring-forest/10 focus:ring-2 focus:ring-forest focus:outline-none"
+            className="h-full cursor-pointer appearance-none rounded-2xl border-0 bg-surface py-2.5 ps-9 pe-4 text-sm font-medium text-forest shadow-sm ring-1 ring-forest/10 focus:ring-2 focus:ring-forest focus:outline-none"
           >
             {(Object.keys(SORT_LABELS) as SortOption[]).map((s) => (
               <option key={s} value={s}>

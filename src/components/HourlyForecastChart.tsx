@@ -31,7 +31,7 @@ export default function HourlyForecastChart({ cart }: HourlyForecastChartProps) 
   const activeHour = hours.find((h) => h.hour === active) ?? null
 
   return (
-    <section aria-label="תחזית עומס לפי שעות" className="rounded-2xl bg-white p-4 ring-1 ring-forest/10">
+    <section aria-label="תחזית עומס לפי שעות" className="rounded-2xl bg-surface p-4 ring-1 ring-forest/10">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h3 className="text-sm font-bold text-forest">מתי הכי פנוי? 📊</h3>
         <div className="flex rounded-full bg-oat p-0.5 text-xs font-bold" role="group" aria-label="סוג יום">
@@ -95,7 +95,7 @@ export default function HourlyForecastChart({ cart }: HourlyForecastChartProps) 
                 <span
                   className={`w-full max-w-7 rounded-t-[4px] transition-all ${STATUS_META[h.status].bgClass} ${
                     isActive || isNow ? 'opacity-100' : 'opacity-75 group-hover:opacity-100'
-                  } ${isNow ? 'ring-2 ring-forest ring-offset-2 ring-offset-white' : ''} group-focus-visible:ring-2 group-focus-visible:ring-forest`}
+                  } ${isNow ? 'ring-2 ring-forest ring-offset-2 ring-offset-surface' : ''} group-focus-visible:ring-2 group-focus-visible:ring-forest`}
                   style={{ height: barH }}
                 />
                 <span

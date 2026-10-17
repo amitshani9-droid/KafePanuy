@@ -7,6 +7,7 @@ import { initialCarts } from '../data/initialCarts'
 import { isDealActive } from '../services/cartService'
 import { LOCATION_ERROR_TEXT, LocationError, requestUserLocation } from '../services/geo'
 import type { MapBounds } from '../services/osmImportService'
+import { clusterCarts, type CartCluster } from '../utils/clusters'
 
 export interface AltRoute {
   fromId: string
@@ -79,6 +80,22 @@ function cartIcon(cart: CoffeeCart, selected: boolean, hasDeal: boolean): L.DivI
         </div>
         <div class="cart-marker__tip"></div>
         <div class="cart-marker__dot" style="background:${STATUS_DOT_COLOR[cart.status]}"></div>
+      </div>`,
+  })
+}
+
+function clusterIcon(cluster: CartCluster): L.DivIcon {
+  const n = cluster.carts.length
+  const free = cluster.calmCount
+  const freeLabel = free === 1 ? '1 פנויה' : `${free} פנויות`
+  return L.divIcon({
+    className: 'cart-cluster-icon',
+    iconSize: [46, 46],
+    iconAnchor: [23, 23],
+    html: `
+      <div class="cart-cluster cart-cluster--${cluster.best}" role="button" aria-label="${n} עגלות באזור, ${freeLabel} — לחצו להתקרבות">
+        <span class="cart-cluster__count">${n}</span>
+        ${free > 0 ? `<span class="cart-cluster__free">${freeLabel}</span>` : ''}
       </div>`,
   })
 }
@@ -191,6 +208,21 @@ export default function MapView({
     [carts, selectedId, now],
   )
 
+  // Selected cart and route ends always keep their own marker
+  const { singles, clusters } = useMemo(() => {
+    const keep = new Set<string>()
+    if (selectedId) keep.add(selectedId)
+    if (route) keep.add(route.fromId)
+    return clusterCarts(carts, zoom, keep)
+  }, [carts, zoom, selectedId, route])
+  const clusterIcons = useMemo(() => new Map(clusters.map((c) => [c.id, clusterIcon(c)])), [clusters])
+
+  function zoomIntoCluster(cluster: CartCluster) {
+    if (!map) return
+    const bounds = L.latLngBounds(cluster.carts.map((c) => [c.coordinates.lat, c.coordinates.lng] as [number, number]))
+    map.flyToBounds(bounds, { padding: [70, 70], maxZoom: 16, duration: 0.8 })
+  }
+
   function searchHere() {
     if (!map) return
     const b = map.getBounds()
@@ -235,7 +267,17 @@ export default function MapView({
         <ZoomWatcher onZoom={setZoom} />
         <PickHandler active={pickMode} onPick={onPick} />
 
-        {carts.map((cart) => (
+        {clusters.map((cluster) => (
+          <Marker
+            key={cluster.id}
+            position={[cluster.center.lat, cluster.center.lng]}
+            icon={clusterIcons.get(cluster.id)}
+            zIndexOffset={cluster.best === 'calm' ? 150 : 50}
+            eventHandlers={{ click: () => !pickMode && zoomIntoCluster(cluster) }}
+          />
+        ))}
+
+        {singles.map((cart) => (
           <Marker
             key={cart.id}
             position={[cart.coordinates.lat, cart.coordinates.lng]}
@@ -308,13 +350,13 @@ export default function MapView({
           onClick={locate}
           disabled={locating}
           aria-label="המיקום שלי"
-          className="pointer-events-auto flex items-center gap-2 rounded-full bg-white p-2.5 text-sm font-bold text-forest shadow-lg ring-1 ring-forest/10 transition hover:bg-cream active:scale-95 disabled:opacity-70 sm:px-4"
+          className="pointer-events-auto flex items-center gap-2 rounded-full bg-surface p-2.5 text-sm font-bold text-forest shadow-lg ring-1 ring-forest/10 transition hover:bg-cream active:scale-95 disabled:opacity-70 sm:px-4"
         >
           {locating ? <Loader2 size={18} className="animate-spin" /> : <LocateFixed size={18} />}
           <span className="hidden sm:inline">המיקום שלי 📍</span>
         </button>
         {locateError && (
-          <div className="pointer-events-auto max-w-xs rounded-xl bg-white px-3 py-2 text-sm text-ink shadow-lg">
+          <div className="pointer-events-auto max-w-xs rounded-xl bg-surface px-3 py-2 text-sm text-ink shadow-lg">
             {locateError}
           </div>
         )}

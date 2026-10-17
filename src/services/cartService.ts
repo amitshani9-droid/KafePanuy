@@ -11,6 +11,9 @@ const KEYS = {
   reports: 'kafe-panuy:v1:reports',
   redemptions: 'kafe-panuy:v1:redemptions',
   ownerCart: 'kafe-panuy:v1:owner-cart',
+  ratings: 'kafe-panuy:v1:ratings',
+  watches: 'kafe-panuy:v1:watches',
+  owners: 'kafe-panuy:v1:owners',
 } as const
 
 const LEGACY_KEYS = ['kafe-panuy:v1:carts']
@@ -150,6 +153,82 @@ export function getOwnerCartId(): string | null {
 
 export function setOwnerCartId(cartId: string): void {
   write(KEYS.ownerCart, cartId)
+}
+
+// ---------- Ratings ----------
+
+export const RATING_POINTS = 5
+
+/** This user's star rating per cart (1–5). */
+export type MyRatings = Record<string, number>
+
+export function getMyRatings(): MyRatings {
+  const stored = read<MyRatings>(KEYS.ratings, {})
+  return stored && typeof stored === 'object' ? stored : {}
+}
+
+/** Saves a rating; the first rating of a cart earns points. */
+export function rateCart(cartId: string, stars: number): { ratings: MyRatings; firstTime: boolean; points: number } {
+  const ratings = getMyRatings()
+  const firstTime = ratings[cartId] === undefined
+  const next = { ...ratings, [cartId]: Math.min(5, Math.max(1, Math.round(stars))) }
+  write(KEYS.ratings, next)
+  const points = firstTime ? addPoints(RATING_POINTS) : getPoints()
+  return { ratings: next, firstTime, points }
+}
+
+/** Blends this user's rating into a cart's displayed average. */
+export function withMyRating(cart: CoffeeCart, mine: number | undefined): CoffeeCart {
+  if (mine === undefined) return cart
+  const count = cart.reviewCount + 1
+  const rating = Math.round(((cart.rating * cart.reviewCount + mine) / count) * 10) / 10
+  return { ...cart, rating, reviewCount: count }
+}
+
+// ---------- "Notify me when it's free" ----------
+
+export function getWatches(): string[] {
+  return readList<string>(KEYS.watches)
+}
+
+export function toggleWatch(cartId: string): string[] {
+  const current = getWatches()
+  const next = current.includes(cartId) ? current.filter((id) => id !== cartId) : [...current, cartId]
+  write(KEYS.watches, next)
+  return next
+}
+
+// ---------- Owner PIN (demo) ----------
+// Client-only stand-in for real owner accounts: the hashed PIN lives in this
+// browser, so it shows the flow but is NOT security. Real auth needs a server.
+
+/** cartId → hashed PIN */
+type OwnerPins = Record<string, string>
+
+export const OWNER_PIN_PATTERN = /^\d{4,6}$/
+
+function hashPin(cartId: string, pin: string): string {
+  // FNV-1a — enough to avoid storing the PIN as plain text in a demo
+  let h = 0x811c9dc5
+  for (const ch of `kafe-panuy:${cartId}:${pin}`) {
+    h ^= ch.charCodeAt(0)
+    h = Math.imul(h, 0x01000193)
+  }
+  return (h >>> 0).toString(16)
+}
+
+export function isCartClaimed(cartId: string): boolean {
+  return Boolean(read<OwnerPins>(KEYS.owners, {})[cartId])
+}
+
+export function claimCart(cartId: string, pin: string): boolean {
+  if (!OWNER_PIN_PATTERN.test(pin) || isCartClaimed(cartId)) return false
+  write(KEYS.owners, { ...read<OwnerPins>(KEYS.owners, {}), [cartId]: hashPin(cartId, pin) })
+  return true
+}
+
+export function verifyOwnerPin(cartId: string, pin: string): boolean {
+  return read<OwnerPins>(KEYS.owners, {})[cartId] === hashPin(cartId, pin)
 }
 
 // ---------- Demo ----------

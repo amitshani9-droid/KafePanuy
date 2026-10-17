@@ -8,6 +8,10 @@
   --color-espresso-dark: #c2410c;
   --color-calm: #10b981;
   --color-calm-dark: #047857;
+  /** Calm-green for small text on page/surface backgrounds (swapped in dark mode) */
+  --color-calm-ink: #047857;
+  /** Card / sheet background */
+  --color-surface: #ffffff;
   --color-moderate: #f59e0b;
   --color-busy: #e11d48;
   --color-ink: #1f2a24;
@@ -62,6 +66,32 @@ html, body, #root {
   height: 100%;
 }
 
+/* ---------- Dark mode ----------
+   Tokens flip: page/surface get dark, "forest" becomes a light mint so
+   text-forest stays readable and bg-forest + text-cream buttons keep contrast. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --color-cream: #111a15;
+    --color-surface: #1a2620;
+    --color-oat: #24342b;
+    --color-ink: #e4ece6;
+    --color-forest: #8fd6ae;
+    --color-forest-light: #b6e7cb;
+    --color-calm-ink: #6ee7b7;
+  }
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-cream: #111a15;
+  --color-surface: #1a2620;
+  --color-oat: #24342b;
+  --color-ink: #e4ece6;
+  --color-forest: #8fd6ae;
+  --color-forest-light: #b6e7cb;
+  --color-calm-ink: #6ee7b7;
+}
+
 body {
   margin: 0;
   background: var(--color-cream);
@@ -78,7 +108,7 @@ body {
   direction: ltr;
   height: 100%;
   width: 100%;
-  background: #f2efe9;
+  background: var(--color-oat);
   font-family: var(--font-body);
 }
 .leaflet-popup-content,
@@ -89,6 +119,16 @@ body {
 .leaflet-control-attribution { font-size: 10px; }
 /* Soften OSM tiles toward a clean, light basemap (tiles only — markers keep full color) */
 .leaflet-tile-pane { filter: grayscale(0.75) brightness(1.06) contrast(0.88) sepia(0.08); }
+/* Dark basemap: invert the light tiles, then pull them back toward a calm green-gray */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) grayscale(0.7) brightness(0.85) contrast(0.9); }
+}
+:root[data-theme='dark'] .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) grayscale(0.7) brightness(0.85) contrast(0.9); }
+.leaflet-container .leaflet-control-attribution {
+  background: color-mix(in srgb, var(--color-surface) 80%, transparent);
+  color: var(--color-ink);
+}
+.leaflet-container .leaflet-control-attribution a { color: var(--color-forest); }
 
 /* ---------- Custom cart markers ---------- */
 .cart-marker {
@@ -127,7 +167,7 @@ body {
   align-items: center;
   gap: 6px;
   padding: 4px 4px 4px 10px;
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 999px;
   box-shadow: 0 4px 14px rgba(27, 67, 50, 0.18), 0 1px 2px rgba(0, 0, 0, 0.08);
   white-space: nowrap;
@@ -166,7 +206,7 @@ body {
   width: 10px;
   height: 10px;
   margin-top: -6px;
-  background: #fff;
+  background: var(--color-surface);
   transform: rotate(45deg);
   box-shadow: 2px 2px 3px rgba(27, 67, 50, 0.12);
 }
@@ -175,7 +215,7 @@ body {
   height: 10px;
   margin-top: 2px;
   border-radius: 999px;
-  border: 2px solid #fff;
+  border: 2px solid var(--color-surface);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 @keyframes busy-ring {
@@ -237,7 +277,7 @@ body {
   width: 28px;
   height: 28px;
   border-radius: 999px;
-  background: #fff;
+  background: var(--color-surface);
   border: 4px solid var(--color-forest);
   box-shadow: 0 2px 8px rgba(27, 67, 50, 0.3);
   cursor: grab;
@@ -246,12 +286,53 @@ body {
   width: 22px;
   height: 22px;
   border-radius: 999px;
-  background: #fff;
+  background: var(--color-surface);
   border: 4px solid var(--color-forest);
   box-shadow: 0 2px 8px rgba(27, 67, 50, 0.3);
   cursor: grab;
 }
 .wait-slider:focus-visible { box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.25); }
+
+/* Marker clusters */
+.cart-cluster-icon { background: transparent; border: 0; }
+.cart-cluster {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--color-surface);
+  border: 4px solid var(--color-calm);
+  box-shadow: 0 4px 14px rgba(27, 67, 50, 0.25);
+  cursor: pointer;
+  transition: transform 150ms ease;
+}
+.cart-cluster:hover { transform: scale(1.08); }
+.cart-cluster--moderate { border-color: var(--color-moderate); }
+.cart-cluster--busy { border-color: var(--color-busy); }
+.cart-cluster__count {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--color-forest);
+}
+.cart-cluster__free {
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--color-calm);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  direction: rtl;
+}
 
 /* User location marker */
 .user-marker { background: transparent; border: 0; }

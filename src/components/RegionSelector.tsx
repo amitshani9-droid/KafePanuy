@@ -21,7 +21,7 @@ export default function RegionSelector({ value, onChange, counts }: RegionSelect
               aria-checked={active}
               onClick={() => onChange(opt.value)}
               className={`flex flex-1 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium whitespace-nowrap transition ${
-                active ? 'bg-white font-bold text-forest shadow-sm' : 'text-forest/70 hover:text-forest'
+                active ? 'bg-surface font-bold text-forest shadow-sm' : 'text-forest/70 hover:text-forest'
               }`}
             >
               <span>

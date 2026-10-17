@@ -38,8 +38,8 @@ export default function FakeQrCode({ value, size = 180 }: FakeQrCodeProps) {
       shapeRendering="crispEdges"
       className="rounded-lg bg-white"
     >
-      <path d={modules} className="fill-forest" />
-      <path d={finder(0, 0) + finder(GRID - 7, 0) + finder(0, GRID - 7)} className="fill-forest" fillRule="evenodd" />
+      <path d={modules} className="fill-[#1B4332]" />
+      <path d={finder(0, 0) + finder(GRID - 7, 0) + finder(0, GRID - 7)} className="fill-[#1B4332]" fillRule="evenodd" />
     </svg>
   )
 }

@@ -10,10 +10,11 @@ interface CartListProps {
   selectedId: string | null
   onSelect: (id: string) => void
   onReport: (id: string) => void
+  watches: string[]
   onClearFilters: () => void
 }
 
-export default function CartList({ carts, origin, selectedId, onSelect, onReport, onClearFilters }: CartListProps) {
+export default function CartList({ carts, origin, selectedId, onSelect, onReport, watches, onClearFilters }: CartListProps) {
   const refs = useRef(new Map<string, HTMLElement>())
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function CartList({ carts, origin, selectedId, onSelect, onReport
             selected={cart.id === selectedId}
             onSelect={onSelect}
             onReport={onReport}
+            watching={watches.includes(cart.id)}
           />
         </li>
       ))}

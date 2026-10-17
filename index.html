@@ -17,6 +17,13 @@
       href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&family=Rubik:wght@500;700&display=swap&subset=hebrew"
       rel="stylesheet"
     />
+    <script>
+      // Apply the saved theme before first paint (see src/hooks/useTheme.ts)
+      try {
+        var t = localStorage.getItem('kafe-panuy:theme')
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t)
+      } catch (e) {}
+    </script>
     <title>קפה פנוי — הקפה שלך, בלי התור</title>
   </head>
   <body>

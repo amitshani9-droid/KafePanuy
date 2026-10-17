@@ -1,4 +1,5 @@
-import { Plus, Store } from 'lucide-react'
+import { Monitor, Moon, Plus, Store, Sun } from 'lucide-react'
+import { useTheme } from '../hooks/useTheme'
 import BrandLogo from './BrandLogo'
 
 interface NavbarProps {
@@ -10,6 +11,10 @@ interface NavbarProps {
 }
 
 export default function Navbar({ freeCount, onOpenOwner, onAddCart, points, onOpenRewards }: NavbarProps) {
+  const { choice, cycle } = useTheme()
+  const ThemeIcon = choice === 'dark' ? Moon : choice === 'light' ? Sun : Monitor
+  const themeLabel = { system: 'ערכת צבעים: לפי המכשיר', light: 'ערכת צבעים: בהירה', dark: 'ערכת צבעים: כהה' }[choice]
+
   return (
     <header className="z-20 border-b border-forest/10 bg-cream/95 backdrop-blur">
       <div className="flex items-center gap-3 px-4 py-3">
@@ -28,6 +33,16 @@ export default function Navbar({ freeCount, onOpenOwner, onAddCart, points, onOp
         <div className="ms-auto flex items-center gap-2">
           <button
             type="button"
+            onClick={cycle}
+            aria-label={`${themeLabel} — לחצו להחלפה`}
+            title={themeLabel}
+            className="flex items-center rounded-full bg-surface p-2 text-forest ring-1 ring-forest/15 transition hover:bg-oat active:scale-95"
+          >
+            <ThemeIcon size={16} />
+          </button>
+
+          <button
+            type="button"
             onClick={onAddCart}
             aria-label="הוסף עגלה חדשה"
             className="flex items-center gap-1.5 rounded-full bg-forest px-2.5 py-1.5 text-sm font-medium text-cream transition hover:bg-forest-light active:scale-95 sm:px-3"
@@ -40,7 +55,7 @@ export default function Navbar({ freeCount, onOpenOwner, onAddCart, points, onOp
             type="button"
             onClick={onOpenOwner}
             aria-label="כניסת בעלי עגלות"
-            className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-sm font-medium text-forest ring-1 ring-forest/15 transition hover:bg-oat active:scale-95"
+            className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-sm font-medium text-forest ring-1 ring-forest/15 transition hover:bg-oat active:scale-95"
           >
             <Store size={16} />
             <span className="hidden lg:inline">כניסת בעלי עגלות 🏪</span>

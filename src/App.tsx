@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CoffeeCart, CrowdStatus, FilterTag, LatLng, ReportInput, Reward, SortOption } from './types/cart'
 import { REPORT_POINTS, rankFor } from './data/rewards'
 import { REGION_OPTIONS, regionForLatLng, type RegionFilter } from './data/regions'
@@ -8,14 +8,20 @@ import {
   getCarts,
   getLifetimePoints,
   getPoints,
+  getMyRatings,
+  getWatches,
   getReports,
   isDealActive,
   makeCartId,
   ownerUpdateStatus,
+  rateCart,
+  RATING_POINTS,
   redeemReward,
   resetDemoData,
   startFlashDeal,
   submitReport,
+  toggleWatch,
+  withMyRating,
 } from './services/cartService'
 import { distanceKm, LOCATION_ERROR_TEXT, LocationError, requestUserLocation } from './services/geo'
 import { fetchCafesInBounds, OsmSearchError, type MapBounds } from './services/osmImportService'
@@ -34,6 +40,7 @@ import Toast, { type ToastMessage } from './components/Toast'
 import { findSmartAlternative, type SmartAlternative } from './utils/recommendations'
 import { cartIdFromUrl, shareCart, syncCartInUrl } from './utils/share'
 import { matchesQuery } from './utils/search'
+import { ensureNotificationPermission, showSystemNotification } from './utils/notify'
 
 type MobileView = 'map' | 'list'
 
@@ -42,7 +49,14 @@ const STATUS_RANK: Record<CrowdStatus, number> = { calm: 0, moderate: 1, busy: 2
 const isMobile = () => window.matchMedia('(max-width: 767px)').matches
 
 export default function App() {
-  const [carts, setCarts] = useState(getCarts)
+  const [baseCarts, setCarts] = useState(getCarts)
+  const [myRatings, setMyRatings] = useState(getMyRatings)
+  const [watches, setWatches] = useState(getWatches)
+  // What every screen shows: stored carts with this user's ratings blended in
+  const carts = useMemo(
+    () => baseCarts.map((c) => withMyRating(c, myRatings[c.id])),
+    [baseCarts, myRatings],
+  )
   const [points, setPoints] = useState(getPoints)
   const [lifetimePoints, setLifetimePoints] = useState(getLifetimePoints)
   const [reports, setReports] = useState(getReports)
@@ -50,6 +64,8 @@ export default function App() {
   const [rewardsOpen, setRewardsOpen] = useState(false)
   const [toast, setToast] = useState<ToastMessage | null>(null)
   const [ownerOpen, setOwnerOpen] = useState(false)
+  // Unlocked with the owner PIN for this visit only (not persisted)
+  const [unlockedIds, setUnlockedIds] = useState<string[]>([])
   // Clock tick so flash deals expire on screen without a refresh
   const [now, setNow] = useState(Date.now)
   useEffect(() => {
@@ -194,6 +210,53 @@ export default function App() {
     })
   }
 
+  // "Notify me when it's free": fire when a watched cart turns calm
+  const prevStatuses = useRef(new Map(carts.map((c) => [c.id, c.status])))
+  useEffect(() => {
+    const prev = prevStatuses.current
+    for (const cart of carts) {
+      const before = prev.get(cart.id)
+      if (watches.includes(cart.id) && before && before !== 'calm' && cart.status === 'calm') {
+        const body = `${cart.area} · בערך ${cart.waitMinutes} דק׳ המתנה — זה הזמן לקפוץ ☕`
+        showSystemNotification(`${cart.name} התפנתה! 🟢`, body)
+        setToast({ id: Date.now(), emoji: '🔔', title: `${cart.name} התפנתה!`, subtitle: body, celebrate: true })
+      }
+    }
+    prevStatuses.current = new Map(carts.map((c) => [c.id, c.status]))
+  }, [carts, watches])
+
+  async function handleToggleWatch(cart: CoffeeCart) {
+    const watching = watches.includes(cart.id)
+    setWatches(toggleWatch(cart.id))
+    if (watching) {
+      setToast({ id: Date.now(), emoji: '🔕', title: 'ההתראה בוטלה' })
+      return
+    }
+    const permission = await ensureNotificationPermission()
+    setToast({
+      id: Date.now(),
+      emoji: '🔔',
+      title: `נודיע לך כש${cart.name} תתפנה`,
+      subtitle:
+        permission === 'granted'
+          ? 'נשלח התראה גם כשהלשונית ברקע'
+          : 'ההודעה תופיע כאן באפליקציה (התראות מערכת חסומות בדפדפן)',
+    })
+  }
+
+  function handleRate(cartId: string, stars: number) {
+    const result = rateCart(cartId, stars)
+    setMyRatings(result.ratings)
+    setPoints(result.points)
+    setLifetimePoints(getLifetimePoints())
+    setToast({
+      id: Date.now(),
+      emoji: '⭐',
+      title: result.firstTime ? `תודה על הדירוג! +${RATING_POINTS} נק׳` : 'הדירוג עודכן',
+      subtitle: `נתת ${stars} כוכבים`,
+    })
+  }
+
   function handleRedeem(reward: Reward) {
     const result = redeemReward(reward)
     if (!result) return null
@@ -226,6 +289,9 @@ export default function App() {
     setPoints(getPoints())
     setLifetimePoints(getLifetimePoints())
     setReports(getReports())
+    setMyRatings(getMyRatings())
+    setWatches(getWatches())
+    setUnlockedIds([])
     setSelectedId(null)
     setDrawerOpen(false)
     setRoute(null)
@@ -423,6 +489,7 @@ export default function App() {
             selectedId={selectedId}
             onSelect={selectFromList}
             onReport={setReportCartId}
+            watches={watches}
             onClearFilters={clearFilters}
           />
           <footer className="border-t border-forest/10 px-4 py-4 text-center text-xs text-ink/40">
@@ -463,6 +530,10 @@ export default function App() {
             onGoToAlternative={goToAlternative}
             onReport={() => setReportCartId(selectedCart.id)}
             onShare={() => handleShare(selectedCart)}
+            myRating={myRatings[selectedCart.id]}
+            onRate={(stars) => handleRate(selectedCart.id, stars)}
+            watching={watches.includes(selectedCart.id)}
+            onToggleWatch={() => handleToggleWatch(selectedCart)}
           />
         )}
 
@@ -514,6 +585,9 @@ export default function App() {
           onStartDeal={handleStartDeal}
           onEndDeal={handleEndDeal}
           onResetDemo={handleResetDemo}
+          unlockedIds={unlockedIds}
+          onUnlock={(id) => setUnlockedIds((ids) => (ids.includes(id) ? ids : [...ids, id]))}
+          onLock={(id) => setUnlockedIds((ids) => ids.filter((x) => x !== id))}
         />
       )}
       {addOpen && (

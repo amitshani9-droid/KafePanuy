@@ -49,7 +49,7 @@ interface AddCartModalProps {
 }
 
 const inputClass =
-  'w-full rounded-xl border-0 bg-white px-3 py-2.5 text-base text-ink ring-1 ring-forest/15 placeholder:text-ink/40 focus:ring-2 focus:ring-forest focus:outline-none'
+  'w-full rounded-xl border-0 bg-surface px-3 py-2.5 text-base text-ink ring-1 ring-forest/15 placeholder:text-ink/40 focus:ring-2 focus:ring-forest focus:outline-none'
 
 function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
   return (
@@ -147,7 +147,7 @@ export default function AddCartModal({ draft, onChange, onPickOnMap, onClose, on
         </Field>
 
         {/* Location */}
-        <section className="rounded-2xl bg-white p-3 ring-1 ring-forest/10">
+        <section className="rounded-2xl bg-surface p-3 ring-1 ring-forest/10">
           <div className="mb-2 text-xs font-bold text-ink/70">מיקום על המפה *</div>
           <div className="grid grid-cols-2 gap-2">
             <button
@@ -191,7 +191,7 @@ export default function AddCartModal({ draft, onChange, onPickOnMap, onClose, on
             />
           </div>
           {coords ? (
-            <p className="mt-2 text-xs text-calm-dark">✓ מיקום תקין</p>
+            <p className="mt-2 text-xs text-calm-ink">✓ מיקום תקין</p>
           ) : (
             (triedSubmit || coordsTouched) && (
               <p className="mt-2 text-xs text-busy">צריך מיקום בתוך ישראל — בחרו על המפה או הקלידו קואורדינטות</p>
@@ -226,7 +226,7 @@ export default function AddCartModal({ draft, onChange, onPickOnMap, onClose, on
                   aria-pressed={active}
                   onClick={() => toggleTag(tag)}
                   className={`rounded-full px-3 py-1.5 text-sm transition ${
-                    active ? 'bg-forest text-cream' : 'bg-white text-ink ring-1 ring-forest/15 hover:bg-oat'
+                    active ? 'bg-forest text-cream' : 'bg-surface text-ink ring-1 ring-forest/15 hover:bg-oat'
                   }`}
                 >
                   {TAG_LABELS[tag].emoji} {TAG_LABELS[tag].label}
@@ -250,7 +250,7 @@ export default function AddCartModal({ draft, onChange, onPickOnMap, onClose, on
                   aria-checked={active}
                   onClick={() => set('status', opt.status)}
                   className={`rounded-xl py-2 text-sm font-bold transition ${
-                    active ? `${meta.softBgClass} ring-2 ring-current ${meta.textClass}` : 'bg-white text-ink ring-1 ring-forest/10'
+                    active ? `${meta.softBgClass} ring-2 ring-current ${meta.textClass}` : 'bg-surface text-ink ring-1 ring-forest/10'
                   }`}
                 >
                   {opt.emoji} {opt.label}

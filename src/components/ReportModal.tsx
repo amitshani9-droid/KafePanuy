@@ -99,7 +99,7 @@ export default function ReportModal({ cart, onClose, onSubmit }: ReportModalProp
                   aria-checked={active}
                   onClick={() => pickStatus(opt.status)}
                   className={`flex items-center gap-3 rounded-2xl p-3.5 text-start transition active:scale-[0.99] ${
-                    active ? `${meta.softBgClass} ring-2 ring-current ${meta.textClass}` : 'bg-white ring-1 ring-forest/10 hover:bg-oat'
+                    active ? `${meta.softBgClass} ring-2 ring-current ${meta.textClass}` : 'bg-surface ring-1 ring-forest/10 hover:bg-oat'
                   }`}
                 >
                   <span className="text-3xl leading-none" aria-hidden="true">
@@ -121,7 +121,7 @@ export default function ReportModal({ cart, onClose, onSubmit }: ReportModalProp
         {/* Step 2 — exact wait */}
         <section>
           <StepTitle n={2}>כמה זמן בערך מחכים?</StepTitle>
-          <div className="rounded-2xl bg-white p-4 ring-1 ring-forest/10">
+          <div className="rounded-2xl bg-surface p-4 ring-1 ring-forest/10">
             <div className="mb-3 flex items-baseline justify-center gap-1.5">
               <span className={`font-display text-4xl font-bold ${STATUS_META[effectiveStatus].textClass}`}>{wait}</span>
               <span className="text-sm font-medium text-ink/60">דק׳ המתנה</span>
@@ -159,7 +159,7 @@ export default function ReportModal({ cart, onClose, onSubmit }: ReportModalProp
                   aria-pressed={active}
                   onClick={() => toggleTag(tag)}
                   className={`rounded-full px-3.5 py-2 text-sm font-medium transition active:scale-95 ${
-                    active ? 'bg-forest text-cream shadow-sm' : 'bg-white text-ink ring-1 ring-forest/15 hover:bg-oat'
+                    active ? 'bg-forest text-cream shadow-sm' : 'bg-surface text-ink ring-1 ring-forest/15 hover:bg-oat'
                   }`}
                 >
                   {tag}
@@ -175,7 +175,7 @@ export default function ReportModal({ cart, onClose, onSubmit }: ReportModalProp
               onChange={(e) => setNote(e.target.value.slice(0, NOTE_MAX))}
               rows={2}
               placeholder="טיפ קצר לבאים אחריך..."
-              className="w-full resize-none rounded-2xl border-0 bg-white px-4 py-3 text-base text-ink shadow-sm ring-1 ring-forest/10 placeholder:text-ink/40 focus:ring-2 focus:ring-forest focus:outline-none"
+              className="w-full resize-none rounded-2xl border-0 bg-surface px-4 py-3 text-base text-ink shadow-sm ring-1 ring-forest/10 placeholder:text-ink/40 focus:ring-2 focus:ring-forest focus:outline-none"
             />
             <span className="block text-end text-xs text-ink/40">
               {note.length}/{NOTE_MAX}

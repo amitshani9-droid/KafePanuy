@@ -61,6 +61,11 @@ Define these as Tailwind theme tokens and **always use the tokens** — never ha
 | `busy` | `#E11D48` | Status: עמוס (busy) |
 
 - Traffic-light statuses (`calm` / `moderate` / `busy`) are reserved for crowd levels only — don't reuse them for unrelated decoration.
+- **Dark mode** works by redefining these tokens in `src/index.css` (system preference, or `data-theme` set by `src/hooks/useTheme.ts`). So:
+  - Cards/sheets use `bg-surface`, never `bg-white` (only the QR code keeps a white background on purpose).
+  - Small green text on page/surface uses `text-calm-ink`; `calm-dark` is only for gradients behind white text.
+  - Modal backdrops use `bg-black/50`, never `bg-ink/…` (ink turns light in dark mode).
+  - New CSS colors go through `var(--color-…)`, not hex.
 - Never rely on color alone for status: pair it with a Hebrew label and/or icon.
 
 ## 4. Map RTL Fix (critical)
@@ -119,6 +124,9 @@ src/
 - Every cart has a `source`: `curated` (seed in `src/data/initialCarts.ts`), `osm` (imported), or `user` (added in the app), and a `region` (`sharon` | `north` | `center` | `south`).
 - **Curated seed:** coordinates were checked against OSM/Nominatim to be within ~2 km of their settlement. Ratings, hours, menus and crowd levels are demo values — don't present them as real.
 - **OSM import** (`src/services/osmImportService.ts`): free public Overpass API, no key. It's a shared service that is often slow (20–50 s per query) and sometimes "at capacity" — keep the search-area cap, the retry-with-backoff, and the 60 s timeout. Never import unnamed cafés, and never invent ratings for imported or user-added carts (`rating: 0, reviewCount: 0` = "חדש במפה"). Keep the "© OpenStreetMap contributors" attribution.
+- **Owner PIN** (`claimCart` / `verifyOwnerPin` in `cartService.ts`) is a client-only demo stand-in for real owner accounts — the hashed PIN lives in the browser, so it is not security. Real owner auth needs a backend; keep the in-app "מצב דמו" note until then.
+- **"Notify me when free"** only fires on changes this browser sees (reports, owner updates). Real push alerts need a server.
+- Map markers cluster below zoom 14 (`src/utils/clusters.ts`, no extra library).
 - Imported/user carts are stored with the curated ones under `kafe-panuy:v2:carts`; `addCarts()` skips duplicate ids and anything within ~40 m of an existing cart.
 
 ## 6. Verification

@@ -14,10 +14,11 @@ interface CartCardProps {
   selected: boolean
   onSelect: (id: string) => void
   onReport?: (id: string) => void
+  watching?: boolean
 }
 
 const CartCard = forwardRef<HTMLElement, CartCardProps>(function CartCard(
-  { cart, distanceKm, selected, onSelect, onReport },
+  { cart, distanceKm, selected, onSelect, onReport, watching = false },
   ref,
 ) {
   const status = STATUS_META[cart.status]
@@ -26,7 +27,7 @@ const CartCard = forwardRef<HTMLElement, CartCardProps>(function CartCard(
   return (
     <article
       ref={ref}
-      className={`overflow-hidden rounded-2xl bg-white shadow-sm transition hover:shadow-md ${
+      className={`overflow-hidden rounded-2xl bg-surface shadow-sm transition hover:shadow-md ${
         selected ? 'ring-2 ring-forest' : 'ring-1 ring-forest/10'
       }`}
     >
@@ -38,7 +39,14 @@ const CartCard = forwardRef<HTMLElement, CartCardProps>(function CartCard(
       >
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-display text-lg font-bold text-forest">{cart.name}</h3>
+          <h3 className="truncate font-display text-lg font-bold text-forest">
+            {cart.name}
+            {watching && (
+              <span className="ms-1.5 text-sm" role="img" aria-label="מחכים שיתפנה">
+                🔔
+              </span>
+            )}
+          </h3>
           <p className="flex items-center gap-1 truncate text-sm text-ink/60">
             <MapPin size={14} className="shrink-0" />
             {cart.area}
@@ -80,7 +88,7 @@ const CartCard = forwardRef<HTMLElement, CartCardProps>(function CartCard(
             <span>({cart.reviewCount})</span>
           </span>
         ) : (
-          <span className="rounded-full bg-calm/10 px-2 py-0.5 font-bold text-calm-dark">✨ חדש במפה</span>
+          <span className="rounded-full bg-calm/10 px-2 py-0.5 font-bold text-calm-ink">✨ חדש במפה</span>
         )}
         <span className="truncate">
           {cart.specialties[0]

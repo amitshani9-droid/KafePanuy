@@ -78,7 +78,7 @@ function CouponView({ reward, redemption, onBack }: { reward: Reward; redemption
       <button
         type="button"
         onClick={onBack}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-bold text-forest ring-1 ring-forest/15 hover:bg-oat"
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-surface py-3 text-sm font-bold text-forest ring-1 ring-forest/15 hover:bg-oat"
       >
         <ArrowRight size={16} />
         חזרה לארנק
@@ -140,7 +140,7 @@ export default function RewardsModal({ points, lifetimePoints, reports, carts, o
               {REWARDS.map((reward) => {
                 const affordable = points >= reward.cost
                 return (
-                  <li key={reward.id} className="flex items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-forest/10">
+                  <li key={reward.id} className="flex items-center gap-3 rounded-2xl bg-surface p-3 ring-1 ring-forest/10">
                     <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-oat text-2xl" aria-hidden="true">
                       {reward.emoji}
                     </span>
@@ -168,11 +168,11 @@ export default function RewardsModal({ points, lifetimePoints, reports, carts, o
           <section>
             <h3 className="mb-2.5 text-sm font-bold text-forest">הדיווחים האחרונים שלך</h3>
             {reports.length === 0 ? (
-              <p className="rounded-2xl bg-white p-4 text-center text-sm text-ink/60 ring-1 ring-forest/10">
+              <p className="rounded-2xl bg-surface p-4 text-center text-sm text-ink/60 ring-1 ring-forest/10">
                 עוד לא דיווחת 🙂 נמצא/ת ליד עגלה? דווח/י מצב וקבל/י +15 נק׳
               </p>
             ) : (
-              <ul className="divide-y divide-forest/5 rounded-2xl bg-white ring-1 ring-forest/10">
+              <ul className="divide-y divide-forest/5 rounded-2xl bg-surface ring-1 ring-forest/10">
                 {reports.slice(0, 8).map((r) => (
                   <li key={r.id} className="flex items-center gap-3 px-4 py-3 text-sm">
                     <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${STATUS_META[r.status].bgClass}`} aria-hidden="true" />

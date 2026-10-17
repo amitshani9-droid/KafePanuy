@@ -1,10 +1,18 @@
-import { useState, type ReactNode } from 'react'
-import { BadgeCheck, Flame, Store } from 'lucide-react'
+import { useState, type FormEvent, type ReactNode } from 'react'
+import { BadgeCheck, Flame, KeyRound, Lock, LockOpen, Store } from 'lucide-react'
 import type { CoffeeCart, CrowdStatus } from '../types/cart'
 import { STATUS_META } from '../data/filters'
 import { MAX_REPORT_WAIT, REPORT_STATUS_OPTIONS, statusForWait } from '../data/rewards'
 import { FLASH_DEAL_DURATIONS, FLASH_DEAL_MAX_LENGTH, FLASH_DEAL_PRESETS } from '../data/deals'
-import { getOwnerCartId, isDealActive, setOwnerCartId } from '../services/cartService'
+import {
+  claimCart,
+  getOwnerCartId,
+  isCartClaimed,
+  isDealActive,
+  OWNER_PIN_PATTERN,
+  setOwnerCartId,
+  verifyOwnerPin,
+} from '../services/cartService'
 import { minutesUntil, updatedLabel } from '../utils/time'
 import Modal from './Modal'
 import ResetDemoButton from './ResetDemoButton'
@@ -16,6 +24,103 @@ interface OwnerDashboardModalProps {
   onStartDeal: (cartId: string, text: string, durationMinutes: number) => void
   onEndDeal: (cartId: string) => void
   onResetDemo: () => void
+  /** Carts unlocked with their owner PIN in this session */
+  unlockedIds: string[]
+  onUnlock: (cartId: string) => void
+  onLock: (cartId: string) => void
+}
+
+/** Claim a cart with a new PIN, or unlock it with the existing one. */
+function OwnerGate({ cart, onUnlock }: { cart: CoffeeCart; onUnlock: () => void }) {
+  const claimed = isCartClaimed(cart.id)
+  const [pin, setPin] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  const pinInput =
+    'w-full rounded-xl border-0 bg-surface px-3 py-2.5 text-center font-display text-xl tracking-[0.4em] text-ink ring-1 ring-forest/15 focus:ring-2 focus:ring-forest focus:outline-none'
+
+  function submit(e: FormEvent) {
+    e.preventDefault()
+    if (!OWNER_PIN_PATTERN.test(pin)) {
+      setError('הקוד צריך להיות 4–6 ספרות')
+      return
+    }
+    if (claimed) {
+      if (verifyOwnerPin(cart.id, pin)) onUnlock()
+      else {
+        setError('הקוד לא נכון, נסו שוב')
+        setPin('')
+      }
+      return
+    }
+    if (pin !== confirm) {
+      setError('הקודים לא תואמים')
+      return
+    }
+    if (claimCart(cart.id, pin)) onUnlock()
+    else setError('לא הצלחנו לרשום את העגלה')
+  }
+
+  return (
+    <form onSubmit={submit} className="rounded-2xl bg-surface p-4 ring-1 ring-forest/10">
+      <h3 className="mb-1 flex items-center gap-2 font-display text-base font-bold text-forest">
+        {claimed ? <Lock size={18} /> : <KeyRound size={18} />}
+        {claimed ? 'הזינו את קוד הבעלים' : 'העגלה עוד לא רשומה — זו שלך?'}
+      </h3>
+      <p className="mb-3 text-sm text-ink/60">
+        {claimed
+          ? `רק מי שמחזיק בקוד יכול לעדכן את ${cart.name}.`
+          : `צרו קוד בעלים (4–6 ספרות). רק עם הקוד אפשר יהיה לעדכן את ${cart.name}.`}
+      </p>
+      <div className={claimed ? '' : 'grid grid-cols-2 gap-2'} dir="ltr">
+        <input
+          type="password"
+          inputMode="numeric"
+          autoComplete={claimed ? 'current-password' : 'new-password'}
+          maxLength={6}
+          value={pin}
+          onChange={(e) => {
+            setPin(e.target.value.replace(/\D/g, ''))
+            setError(null)
+          }}
+          aria-label={claimed ? 'קוד בעלים' : 'קוד בעלים חדש'}
+          placeholder="••••"
+          className={pinInput}
+        />
+        {!claimed && (
+          <input
+            type="password"
+            inputMode="numeric"
+            autoComplete="new-password"
+            maxLength={6}
+            value={confirm}
+            onChange={(e) => {
+              setConfirm(e.target.value.replace(/\D/g, ''))
+              setError(null)
+            }}
+            aria-label="אימות הקוד"
+            placeholder="שוב"
+            className={pinInput}
+          />
+        )}
+      </div>
+      {error && (
+        <p className="mt-2 text-sm font-bold text-busy" role="alert">
+          {error}
+        </p>
+      )}
+      <button
+        type="submit"
+        className="mt-3 w-full rounded-xl bg-forest py-3 font-display font-bold text-cream transition hover:bg-forest-light active:scale-[0.98]"
+      >
+        {claimed ? 'כניסה' : 'רשמו את העגלה שלי'}
+      </button>
+      <p className="mt-3 text-xs text-ink/50">
+        🧪 מצב דמו: הקוד נשמר רק בדפדפן הזה ואינו אבטחה אמיתית. בגרסה מלאה תהיה התחברות מאובטחת דרך שרת.
+      </p>
+    </form>
+  )
 }
 
 function SectionTitle({ icon, children }: { icon: ReactNode; children: string }) {
@@ -36,7 +141,7 @@ function StatusSection({ cart, onSubmit }: { cart: CoffeeCart; onSubmit: (s: Cro
   }
 
   return (
-    <section className="rounded-2xl bg-white p-4 ring-1 ring-forest/10">
+    <section className="rounded-2xl bg-surface p-4 ring-1 ring-forest/10">
       <SectionTitle icon={<BadgeCheck size={18} />}>עדכון סטטוס רשמי</SectionTitle>
       <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="מצב העומס">
         {REPORT_STATUS_OPTIONS.map((opt) => {
@@ -102,7 +207,7 @@ function DealSection({
   const active = isDealActive(cart) ? cart.flashDeal! : null
 
   return (
-    <section className="rounded-2xl bg-white p-4 ring-1 ring-forest/10">
+    <section className="rounded-2xl bg-surface p-4 ring-1 ring-forest/10">
       <SectionTitle icon={<Flame size={18} className="text-espresso" />}>מבצע בזק להבאת לקוחות כשפנוי</SectionTitle>
 
       {active ? (
@@ -194,6 +299,9 @@ export default function OwnerDashboardModal({
   onStartDeal,
   onEndDeal,
   onResetDemo,
+  unlockedIds,
+  onUnlock,
+  onLock,
 }: OwnerDashboardModalProps) {
   const [cartId, setCartId] = useState(() => {
     const saved = getOwnerCartId()
@@ -229,7 +337,7 @@ export default function OwnerDashboardModal({
           <select
             value={cart.id}
             onChange={(e) => chooseCart(e.target.value)}
-            className="w-full cursor-pointer rounded-xl border-0 bg-white px-3 py-3 text-base font-bold text-forest ring-1 ring-forest/15 focus:ring-2 focus:ring-forest focus:outline-none"
+            className="w-full cursor-pointer rounded-xl border-0 bg-surface px-3 py-3 text-base font-bold text-forest ring-1 ring-forest/15 focus:ring-2 focus:ring-forest focus:outline-none"
           >
             {carts.map((c) => (
               <option key={c.id} value={c.id}>
@@ -245,16 +353,30 @@ export default function OwnerDashboardModal({
           <span className={`rounded-full px-2.5 py-0.5 font-bold text-white ${meta.bgClass}`}>{meta.label}</span>
           <span className="font-display font-bold text-ink">{cart.waitMinutes} דק׳</span>
           <span className="text-ink/50">· {updatedLabel(cart.lastUpdated)}</span>
-          {cart.ownerVerified && <BadgeCheck size={16} className="text-calm-dark" aria-label="מאומת" />}
+          {cart.ownerVerified && <BadgeCheck size={16} className="text-calm-ink" aria-label="מאומת" />}
         </div>
 
-        <StatusSection key={`status-${cart.id}`} cart={cart} onSubmit={(s, w) => onStatusUpdate(cart.id, s, w)} />
-        <DealSection
-          key={`deal-${cart.id}`}
-          cart={cart}
-          onStart={(text, minutes) => onStartDeal(cart.id, text, minutes)}
-          onEnd={() => onEndDeal(cart.id)}
-        />
+        {unlockedIds.includes(cart.id) ? (
+          <>
+            <StatusSection key={`status-${cart.id}`} cart={cart} onSubmit={(s, w) => onStatusUpdate(cart.id, s, w)} />
+            <DealSection
+              key={`deal-${cart.id}`}
+              cart={cart}
+              onStart={(text, minutes) => onStartDeal(cart.id, text, minutes)}
+              onEnd={() => onEndDeal(cart.id)}
+            />
+            <button
+              type="button"
+              onClick={() => onLock(cart.id)}
+              className="flex w-full items-center justify-center gap-2 rounded-xl py-2 text-sm font-bold text-forest/70 hover:bg-oat"
+            >
+              <LockOpen size={15} />
+              נעילת העגלה
+            </button>
+          </>
+        ) : (
+          <OwnerGate key={`gate-${cart.id}`} cart={cart} onUnlock={() => onUnlock(cart.id)} />
+        )}
       </div>
     </Modal>
   )
