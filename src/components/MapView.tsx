@@ -43,6 +43,10 @@ interface MapViewProps {
   pickMode: boolean
   onPick: (loc: LatLng) => void
   onCancelPick: () => void
+  /** Space (px) reserved above the map's own top controls, e.g. for a floating search bar */
+  topInset?: number
+  /** Space (px) reserved below the map's own bottom controls */
+  bottomInset?: number
 }
 
 type Focus =
@@ -107,37 +111,60 @@ const userIcon = L.divIcon({
   html: '<span></span>',
 })
 
-/** Flies to the selected cart / user location / alt route / region, keeping it clear of the mobile drawer. */
-function MapController({ focus, drawerOpen }: { focus: Focus | null; drawerOpen: boolean }) {
+/**
+ * Flies to the selected cart / user location / alt route / region, keeping it clear of
+ * the floating header (topInset) and the mobile drawer. If the map is hidden (another
+ * phone tab is open) it has zero size, so the move waits until it's visible again.
+ */
+function MapController({ focus, drawerOpen, topInset }: { focus: Focus | null; drawerOpen: boolean; topInset: number }) {
   const map = useMap()
   useEffect(() => {
     if (!focus) return
-    map.invalidateSize() // container may have just become visible (mobile list → map)
-    const size = map.getSize()
-    const inset = drawerOpen && size.x < 768 ? Math.round(size.y * MOBILE_DRAWER_FRACTION) : 0
 
-    if (focus.kind === 'route') {
-      const { from, to } = focus.route
-      map.flyToBounds(toBounds([from, to]), {
-        paddingTopLeft: [60, 80],
-        paddingBottomRight: [60, inset + 50],
-        maxZoom: 15,
-        duration: 1.1,
-      })
-    } else if (focus.kind === 'bounds') {
-      if (focus.points.length === 0) return
-      map.flyToBounds(toBounds(focus.points), {
-        paddingTopLeft: [40, 70],
-        paddingBottomRight: [40, inset + 40],
-        maxZoom: 13,
-        duration: 1.2,
-      })
-    } else {
-      const zoom = Math.max(map.getZoom(), 14)
-      const shifted = map.project([focus.at.lat, focus.at.lng], zoom).add([0, inset / 2])
-      map.flyTo(map.unproject(shifted, zoom), zoom, { duration: 0.8 })
+    const apply = () => {
+      const size = map.getSize()
+      const inset = drawerOpen && size.x < 768 ? Math.round(size.y * MOBILE_DRAWER_FRACTION) : 0
+      if (focus.kind === 'route') {
+        const { from, to } = focus.route
+        map.flyToBounds(toBounds([from, to]), {
+          paddingTopLeft: [60, topInset + 60],
+          paddingBottomRight: [60, inset + 50],
+          maxZoom: 15,
+          duration: 1.1,
+        })
+      } else if (focus.kind === 'bounds') {
+        if (focus.points.length === 0) return
+        map.flyToBounds(toBounds(focus.points), {
+          paddingTopLeft: [40, topInset + 40],
+          paddingBottomRight: [40, inset + 40],
+          maxZoom: 13,
+          duration: 1.2,
+        })
+      } else {
+        const zoom = Math.max(map.getZoom(), 14)
+        // Center the point in the visible band between the header and the drawer
+        const shifted = map.project([focus.at.lat, focus.at.lng], zoom).add([0, (inset - topInset) / 2])
+        map.flyTo(map.unproject(shifted, zoom), zoom, { duration: 0.8 })
+      }
     }
-    // drawerOpen is read at fly time only; toggling it alone shouldn't move the map
+
+    map.invalidateSize()
+    const { x, y } = map.getSize()
+    if (x > 0 && y > 0) {
+      apply()
+      return
+    }
+    const onResize = () => {
+      const size = map.getSize()
+      if (size.x === 0 || size.y === 0) return
+      map.off('resize', onResize)
+      apply()
+    }
+    map.on('resize', onResize)
+    return () => {
+      map.off('resize', onResize)
+    }
+    // drawerOpen/topInset are read at fly time only; changing them alone shouldn't move the map
   }, [map, focus])
   return null
 }
@@ -156,6 +183,12 @@ function ResizeWatcher() {
 function ZoomWatcher({ onZoom }: { onZoom: (z: number) => void }) {
   const map = useMapEvents({ zoomend: (e) => onZoom(e.target.getZoom()) })
   useEffect(() => onZoom(map.getZoom()), [map, onZoom])
+  return null
+}
+
+/** Reports that the visible area changed, so "search this area" becomes relevant. */
+function MoveWatcher({ onMoved }: { onMoved: () => void }) {
+  useMapEvents({ moveend: onMoved })
   return null
 }
 
@@ -184,7 +217,10 @@ export default function MapView({
   pickMode,
   onPick,
   onCancelPick,
+  topInset = 12,
+  bottomInset = 16,
 }: MapViewProps) {
+  const [areaChanged, setAreaChanged] = useState(false)
   const [map, setMap] = useState<L.Map | null>(null)
   const [focus, setFocus] = useState<Focus | null>(null)
   const [locating, setLocating] = useState(false)
@@ -226,6 +262,7 @@ export default function MapView({
   function searchHere() {
     if (!map) return
     const b = map.getBounds()
+    setAreaChanged(false)
     onSearchArea({ south: b.getSouth(), west: b.getWest(), north: b.getNorth(), east: b.getEast() })
   }
 
@@ -262,10 +299,11 @@ export default function MapView({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           maxZoom={19}
         />
-        <MapController focus={focus} drawerOpen={drawerOpen} />
+        <MapController focus={focus} drawerOpen={drawerOpen} topInset={topInset} />
         <ResizeWatcher />
         <ZoomWatcher onZoom={setZoom} />
         <PickHandler active={pickMode} onPick={onPick} />
+        <MoveWatcher onMoved={() => setAreaChanged(true)} />
 
         {clusters.map((cluster) => (
           <Marker
@@ -310,7 +348,11 @@ export default function MapView({
       </MapContainer>
 
       {/* Floating overlays — back to RTL */}
-      <div dir="rtl" className="pointer-events-none absolute inset-x-0 top-3 z-[1000] flex justify-center px-16">
+      <div
+        dir="rtl"
+        className="pointer-events-none absolute inset-x-0 z-[1000] flex justify-center px-4"
+        style={{ top: topInset }}
+      >
         {pickMode ? (
           <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-forest py-1.5 ps-4 pe-1.5 text-sm font-bold text-cream shadow-lg">
             <Crosshair size={16} />
@@ -325,41 +367,40 @@ export default function MapView({
             </button>
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={searchHere}
-            disabled={searching}
-            className="pointer-events-auto flex items-center gap-2 rounded-full bg-forest px-4 py-2 text-sm font-bold text-cream shadow-lg transition hover:bg-forest-light active:scale-95 disabled:opacity-80"
-          >
-            {searching ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
-            {searching ? (
-              'מחפשים ב-OpenStreetMap… (עד דקה)'
-            ) : (
-              <>
-                <span className="sm:hidden">חפש בתי קפה באזור</span>
-                <span className="hidden sm:inline">🔍 חפש עגלות ובתי קפה נוספים באזור זה</span>
-              </>
-            )}
-          </button>
+          (areaChanged || searching) && (
+            <button
+              type="button"
+              onClick={searchHere}
+              disabled={searching}
+              className="pointer-events-auto flex items-center gap-2 rounded-full bg-forest px-4 py-2 text-sm font-bold text-cream shadow-lg transition animate-pop-in hover:bg-forest-light active:scale-95 disabled:opacity-90"
+            >
+              {searching ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+              {searching ? 'מחפשים בתי קפה באזור… (עד דקה)' : 'חפש בתי קפה באזור הזה'}
+            </button>
+          )
         )}
       </div>
 
-      <div dir="rtl" className="pointer-events-none absolute top-3 left-3 z-[1000] flex flex-col items-end gap-2">
+      <div
+        dir="rtl"
+        className="pointer-events-none absolute left-3 z-[1000] flex flex-col items-start gap-2"
+        style={{ bottom: bottomInset }}
+      >
+        {locateError && (
+          <div className="pointer-events-auto max-w-[16rem] rounded-xl bg-surface px-3 py-2 text-sm text-ink shadow-lg">
+            {locateError}
+          </div>
+        )}
         <button
           type="button"
           onClick={locate}
           disabled={locating}
           aria-label="המיקום שלי"
-          className="pointer-events-auto flex items-center gap-2 rounded-full bg-surface p-2.5 text-sm font-bold text-forest shadow-lg ring-1 ring-forest/10 transition hover:bg-cream active:scale-95 disabled:opacity-70 sm:px-4"
+          title="המיקום שלי"
+          className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full bg-surface text-forest shadow-lg ring-1 ring-forest/10 transition hover:bg-oat active:scale-95 disabled:opacity-70"
         >
-          {locating ? <Loader2 size={18} className="animate-spin" /> : <LocateFixed size={18} />}
-          <span className="hidden sm:inline">המיקום שלי 📍</span>
+          {locating ? <Loader2 size={20} className="animate-spin" /> : <LocateFixed size={20} />}
         </button>
-        {locateError && (
-          <div className="pointer-events-auto max-w-xs rounded-xl bg-surface px-3 py-2 text-sm text-ink shadow-lg">
-            {locateError}
-          </div>
-        )}
       </div>
     </div>
   )

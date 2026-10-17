@@ -57,7 +57,7 @@ function tagsFromOsm(t: Record<string, string>): FilterTag[] {
 const OSM_DAYS: Record<string, string> = { Su: 'א׳', Mo: 'ב׳', Tu: 'ג׳', We: 'ד׳', Th: 'ה׳', Fr: 'ו׳', Sa: 'ש׳' }
 
 /** "Su-Th 09:00-23:00; Fr 08:30-15:00" → "א׳–ה׳ 09:00–23:00 · ו׳ 08:30–15:00" */
-function formatOpeningHours(raw: string | undefined): string {
+export function formatOpeningHours(raw: string | undefined): string {
   if (!raw) return 'שעות פתיחה לא ידועות'
   if (raw.trim() === '24/7') return 'פתוח 24/7'
   return raw

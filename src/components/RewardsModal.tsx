@@ -7,13 +7,16 @@ import { timeAgo } from '../utils/time'
 import Modal from './Modal'
 import FakeQrCode from './FakeQrCode'
 
-interface RewardsModalProps {
+interface WalletProps {
   points: number
   lifetimePoints: number
   reports: FieldReport[]
   carts: CoffeeCart[]
+  onRedeem: (reward: Reward) => Promise<Redemption | null>
+}
+
+interface RewardsModalProps extends WalletProps {
   onClose: () => void
-  onRedeem: (reward: Reward) => Redemption | null
 }
 
 const COUPON_VALID_MIN = 15
@@ -87,21 +90,23 @@ function CouponView({ reward, redemption, onBack }: { reward: Reward; redemption
   )
 }
 
-export default function RewardsModal({ points, lifetimePoints, reports, carts, onClose, onRedeem }: RewardsModalProps) {
+/** Points, rank, rewards catalog and recent reports — a phone tab or the desktop modal. */
+export function WalletContent({ points, lifetimePoints, reports, carts, onRedeem }: WalletProps) {
   const [coupon, setCoupon] = useState<{ reward: Reward; redemption: Redemption } | null>(null)
   const rank = rankFor(lifetimePoints)
   const progress = rank.next ? Math.min(1, (lifetimePoints - rank.min) / (rank.next.min - rank.min)) : 1
   const cartName = (id: string) => carts.find((c) => c.id === id)?.name ?? 'עגלה'
 
-  function redeem(reward: Reward) {
-    const redemption = onRedeem(reward)
+  async function redeem(reward: Reward) {
+    const redemption = await onRedeem(reward)
     if (redemption) setCoupon({ reward, redemption })
   }
 
-  return (
-    <Modal onClose={onClose} title={coupon ? 'הקופון שלך מוכן 🎉' : 'ארנק נקודות הקפה ☕'}>
-      {coupon ? (
-        <CouponView reward={coupon.reward} redemption={coupon.redemption} onBack={() => setCoupon(null)} />
+  return coupon ? (
+        <div>
+          <h3 className="mb-2 font-display text-lg font-bold text-forest">הקופון שלך מוכן 🎉</h3>
+          <CouponView reward={coupon.reward} redemption={coupon.redemption} onBack={() => setCoupon(null)} />
+        </div>
       ) : (
         <div className="space-y-6 pt-2">
           {/* Balance + rank */}
@@ -189,7 +194,13 @@ export default function RewardsModal({ points, lifetimePoints, reports, carts, o
             )}
           </section>
         </div>
-      )}
+      )
+}
+
+export default function RewardsModal({ onClose, ...wallet }: RewardsModalProps) {
+  return (
+    <Modal onClose={onClose} title="ארנק נקודות הקפה ☕">
+      <WalletContent {...wallet} />
     </Modal>
   )
 }

@@ -49,5 +49,5 @@ export function useTheme() {
   }, [choice])
 
   const cycle = useCallback(() => setChoice((c) => NEXT[c]), [])
-  return { choice, cycle }
+  return { choice, setChoice, cycle }
 }

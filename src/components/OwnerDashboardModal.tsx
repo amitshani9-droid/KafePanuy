@@ -1,18 +1,11 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { BadgeCheck, Flame, KeyRound, Lock, LockOpen, Store } from 'lucide-react'
 import type { CoffeeCart, CrowdStatus } from '../types/cart'
 import { STATUS_META } from '../data/filters'
 import { MAX_REPORT_WAIT, REPORT_STATUS_OPTIONS, statusForWait } from '../data/rewards'
 import { FLASH_DEAL_DURATIONS, FLASH_DEAL_MAX_LENGTH, FLASH_DEAL_PRESETS } from '../data/deals'
-import {
-  claimCart,
-  getOwnerCartId,
-  isCartClaimed,
-  isDealActive,
-  OWNER_PIN_PATTERN,
-  setOwnerCartId,
-  verifyOwnerPin,
-} from '../services/cartService'
+import { getOwnerCartId, isDealActive, OWNER_PIN_PATTERN, setOwnerCartId } from '../services/cartService'
+import { repo } from '../services'
 import { minutesUntil, updatedLabel } from '../utils/time'
 import Modal from './Modal'
 import ResetDemoButton from './ResetDemoButton'
@@ -32,7 +25,8 @@ interface OwnerDashboardModalProps {
 
 /** Claim a cart with a new PIN, or unlock it with the existing one. */
 function OwnerGate({ cart, onUnlock }: { cart: CoffeeCart; onUnlock: () => void }) {
-  const claimed = isCartClaimed(cart.id)
+  const [claimed, setClaimed] = useState<boolean | null>(null)
+  const [busy, setBusy] = useState(false)
   const [pin, setPin] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -40,26 +34,36 @@ function OwnerGate({ cart, onUnlock }: { cart: CoffeeCart; onUnlock: () => void 
   const pinInput =
     'w-full rounded-xl border-0 bg-surface px-3 py-2.5 text-center font-display text-xl tracking-[0.4em] text-ink ring-1 ring-forest/15 focus:ring-2 focus:ring-forest focus:outline-none'
 
-  function submit(e: FormEvent) {
+  useEffect(() => {
+    let alive = true
+    repo.isCartClaimed(cart.id).then((v) => alive && setClaimed(v))
+    return () => {
+      alive = false
+    }
+  }, [cart.id])
+
+  async function submit(e: FormEvent) {
     e.preventDefault()
     if (!OWNER_PIN_PATTERN.test(pin)) {
       setError('הקוד צריך להיות 4–6 ספרות')
       return
     }
-    if (claimed) {
-      if (verifyOwnerPin(cart.id, pin)) onUnlock()
-      else {
-        setError('הקוד לא נכון, נסו שוב')
-        setPin('')
-      }
-      return
-    }
-    if (pin !== confirm) {
+    if (!claimed && pin !== confirm) {
       setError('הקודים לא תואמים')
       return
     }
-    if (claimCart(cart.id, pin)) onUnlock()
-    else setError('לא הצלחנו לרשום את העגלה')
+    setBusy(true)
+    const ok = claimed ? await repo.verifyOwnerPin(cart.id, pin) : await repo.claimCart(cart.id, pin)
+    setBusy(false)
+    if (ok) onUnlock()
+    else if (claimed) {
+      setError('הקוד לא נכון, נסו שוב')
+      setPin('')
+    } else setError('לא הצלחנו לרשום את העגלה')
+  }
+
+  if (claimed === null) {
+    return <div className="h-40 animate-pulse rounded-2xl bg-surface ring-1 ring-forest/10" aria-label="טוען" />
   }
 
   return (
@@ -112,7 +116,8 @@ function OwnerGate({ cart, onUnlock }: { cart: CoffeeCart; onUnlock: () => void 
       )}
       <button
         type="submit"
-        className="mt-3 w-full rounded-xl bg-forest py-3 font-display font-bold text-cream transition hover:bg-forest-light active:scale-[0.98]"
+        disabled={busy}
+        className="mt-3 w-full disabled:opacity-60 rounded-xl bg-forest py-3 font-display font-bold text-cream transition hover:bg-forest-light active:scale-[0.98]"
       >
         {claimed ? 'כניסה' : 'רשמו את העגלה שלי'}
       </button>

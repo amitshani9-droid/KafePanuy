@@ -3,10 +3,11 @@ interface BrandLogoProps {
 }
 
 /** Map pin holding a steaming coffee cup, with a pulsing "live" dot. */
-function LogoMark() {
+export function LogoMark({ size = 'md' }: { size?: 'sm' | 'md' }) {
+  const box = size === 'sm' ? 'h-8 w-8' : 'h-10 w-10'
   return (
-    <div className="relative h-10 w-10 shrink-0">
-      <svg viewBox="0 0 48 48" className="h-10 w-10" aria-hidden="true">
+    <div className={`relative shrink-0 ${box}`}>
+      <svg viewBox="0 0 48 48" className={box} aria-hidden="true">
         <path
           d="M24 3C14.6 3 7 10.4 7 19.6 7 31.8 24 45 24 45s17-13.2 17-25.4C41 10.4 33.4 3 24 3z"
           className="fill-forest"
