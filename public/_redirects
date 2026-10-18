@@ -1,5 +1,8 @@
-# Proxy Overpass API to bypass browser CORS completely on Netlify
-/api/overpass/*  https://overpass-api.de/api/:splat  200
+# Overpass mirrors proxied server-side by Netlify — the browser only ever talks to
+# our own origin, so there are no CORS errors. The client tries them in order.
+/api/overpass/*         https://overpass-api.de/api/:splat          200
+/api/overpass-kumi/*    https://overpass.kumi.systems/api/:splat    200
+/api/overpass-coffee/*  https://overpass.private.coffee/api/:splat  200
 
 # Single Page App routing fallback
 /*  /index.html  200

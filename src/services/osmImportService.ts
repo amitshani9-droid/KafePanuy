@@ -4,21 +4,22 @@ import { statusForWait } from '../data/rewards'
 import { estimateWaitNow } from '../utils/forecast'
 import { getDistanceKm } from '../utils/recommendations'
 
-const OVERPASS_ENDPOINTS = [
-  // Same-origin proxy via Netlify _redirects to bypass CORS in production
+/** Production: same-origin Netlify proxies only (see public/_redirects) — never cross-origin, so no CORS errors. */
+const PROXY_ENDPOINTS = [
+  '/api/overpass-kumi/interpreter',
   '/api/overpass/interpreter',
-  // Public Overpass endpoints
-  'https://overpass-api.de/api/interpreter',
-  'https://overpass.private.coffee/api/interpreter',
+  '/api/overpass-coffee/interpreter',
 ]
+/** Local dev has no Netlify proxy; these mirrors send CORS headers on success. */
+const DIRECT_ENDPOINTS = ['https://overpass.kumi.systems/api/interpreter', 'https://overpass-api.de/api/interpreter']
 
 /** Overpass is a shared free service — keep searches to roughly city-sized areas. */
 export const MAX_SEARCH_DIAGONAL_KM = 45
 const MAX_RESULTS = 250
-/** Timeout per endpoint attempt */
-const TIMEOUT_MS = 25_000
-/** Backoff between attempts when the server is at capacity, as Overpass asks */
-const RETRY_DELAYS_MS = [2_000, 5_000]
+/** Per-mirror timeout. Netlify cuts proxied requests at ~26s, so stay under it. */
+const TIMEOUT_MS = 20_000
+/** One full retry pass after a short backoff, as Overpass asks when at capacity */
+const RETRY_DELAYS_MS = [3_000]
 
 export interface MapBounds {
   south: number
@@ -50,7 +51,7 @@ export function boundsDiagonalKm(b: MapBounds): number {
 
 function buildQuery({ south, west, north, east }: MapBounds): string {
   const bbox = `${south},${west},${north},${east}`
-  return `[out:json][timeout:25];nwr["amenity"="cafe"](${bbox});out center ${MAX_RESULTS};`
+  return `[out:json][timeout:18];nwr["amenity"="cafe"](${bbox});out center ${MAX_RESULTS};`
 }
 
 function tagsFromOsm(t: Record<string, string>): FilterTag[] {
@@ -123,19 +124,17 @@ export async function fetchCafesInBounds(bounds: MapBounds): Promise<CoffeeCart[
     try {
       return await queryOverpass(query)
     } catch (err) {
-      // An at-capacity reply has no CORS headers, so it surfaces as a network error too
-      const timedOut = err instanceof OsmSearchError && err.kind === 'timeout'
-      if (timedOut || attempt >= RETRY_DELAYS_MS.length) throw err
+      // Only retry when mirrors said "busy"; timeouts/network failures already tried every mirror
+      const busy = err instanceof OsmSearchError && err.kind === 'busy'
+      if (!busy || attempt >= RETRY_DELAYS_MS.length) throw err
       await sleep(RETRY_DELAYS_MS[attempt])
     }
   }
 }
 
 async function queryOverpass(query: string): Promise<CoffeeCart[]> {
-  const endpoints =
-    typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-      ? OVERPASS_ENDPOINTS
-      : ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter']
+  const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+  const endpoints = isLocal ? DIRECT_ENDPOINTS : PROXY_ENDPOINTS
 
   let lastError: Error | null = null
 
@@ -150,7 +149,8 @@ async function queryOverpass(query: string): Promise<CoffeeCart[]> {
         signal: controller.signal,
       })
 
-      if ([429, 502, 503, 504].includes(res.status)) {
+      // 429 / any 5xx (incl. Netlify's 500 when the upstream mirror is too slow) → try the next mirror
+      if (res.status === 429 || res.status >= 500) {
         lastError = new OsmSearchError('busy')
         continue
       }
