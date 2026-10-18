@@ -1,0 +1,5 @@
+# Proxy Overpass API to bypass browser CORS completely on Netlify
+/api/overpass/*  https://overpass-api.de/api/:splat  200
+
+# Single Page App routing fallback
+/*  /index.html  200

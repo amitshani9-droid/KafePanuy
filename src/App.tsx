@@ -21,6 +21,7 @@ import BottomTabs, { type MobileTab } from './components/BottomTabs'
 import MobileMapOverlay, { MOBILE_OVERLAY_HEIGHT } from './components/MobileMapOverlay'
 import MoreScreen from './components/MoreScreen'
 import FiltersSheet from './components/FiltersSheet'
+import CommunityFeed from './components/CommunityFeed'
 import ReportModal from './components/ReportModal'
 import RewardsModal, { WalletContent } from './components/RewardsModal'
 import OwnerDashboardModal from './components/OwnerDashboardModal'
@@ -229,6 +230,17 @@ export default function App() {
               />
             )}
           </section>
+          {tab === 'feed' && (
+            <section className="h-full" aria-label="מהשטח חי">
+              <CommunityFeed
+                reports={store.reports}
+                carts={store.carts}
+                onSelectCart={openCart}
+                onLikeReport={store.likeReport}
+                onOpenReportModal={(id) => setReportCartId(id)}
+              />
+            </section>
+          )}
           {tab === 'list' && <section className="h-full" aria-label="רשימת עגלות">{listPanel('mobile')}</section>}
           {tab === 'wallet' && (
             <section className="h-full overflow-y-auto px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-8" aria-label="ארנק">

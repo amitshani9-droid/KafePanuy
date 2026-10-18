@@ -1,6 +1,6 @@
-import { List, Map as MapIcon, Menu, Wallet } from 'lucide-react'
+import { List, Map as MapIcon, Menu, Sparkles, Wallet } from 'lucide-react'
 
-export type MobileTab = 'map' | 'list' | 'wallet' | 'more'
+export type MobileTab = 'map' | 'feed' | 'list' | 'wallet' | 'more'
 
 interface BottomTabsProps {
   tab: MobileTab
@@ -10,6 +10,7 @@ interface BottomTabsProps {
 
 const TABS = [
   { id: 'map', label: 'מפה', Icon: MapIcon },
+  { id: 'feed', label: 'מהשטח', Icon: Sparkles },
   { id: 'list', label: 'רשימה', Icon: List },
   { id: 'wallet', label: 'ארנק', Icon: Wallet },
   { id: 'more', label: 'עוד', Icon: Menu },
@@ -20,7 +21,7 @@ export default function BottomTabs({ tab, onChange, points }: BottomTabsProps) {
   return (
     <nav
       aria-label="ניווט ראשי"
-      className="z-[1300] grid grid-cols-4 border-t border-forest/10 bg-surface pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_rgba(0,0,0,0.06)]"
+      className="z-[1300] grid grid-cols-5 border-t border-forest/10 bg-surface pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_rgba(0,0,0,0.06)]"
     >
       {TABS.map(({ id, label, Icon }) => {
         const active = tab === id

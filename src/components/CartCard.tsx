@@ -1,9 +1,10 @@
 import { forwardRef } from 'react'
-import { Clock, MapPin, Star } from 'lucide-react'
+import { Clock, MapPin, Navigation, Star } from 'lucide-react'
 import type { CoffeeCart } from '../types/cart'
 import { STATUS_META, TAG_LABELS } from '../data/filters'
 import { formatDistance } from '../services/geo'
 import { updatedLabel } from '../utils/time'
+import { getWazeUrl } from '../utils/navigation'
 import ReportButton from './ReportButton'
 import { isDealActive } from '../services/cartService'
 
@@ -109,11 +110,24 @@ const CartCard = forwardRef<HTMLElement, CartCardProps>(function CartCard(
         </div>
       </div>
       </button>
-      {onReport && (
-        <div className="px-4 pb-3">
-          <ReportButton onClick={() => onReport(cart.id)} />
-        </div>
-      )}
+      <div className="flex items-center gap-2 px-4 pb-3">
+        {onReport && (
+          <div className="flex-1">
+            <ReportButton onClick={() => onReport(cart.id)} />
+          </div>
+        )}
+        <a
+          href={getWazeUrl(cart.coordinates)}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center justify-center gap-1.5 rounded-xl bg-forest/10 px-3.5 py-2.5 text-xs font-bold text-forest transition hover:bg-forest/20 active:scale-95"
+          title="ניווט ב-Waze"
+        >
+          <Navigation size={14} />
+          <span>Waze</span>
+        </a>
+      </div>
     </article>
   )
 })

@@ -157,6 +157,14 @@ export function useKafeStore(notify: Notify) {
     [patch],
   )
 
+  const likeReport = useCallback(
+    async (reportId: string) => {
+      const updatedReports = await repo.likeReport(reportId)
+      patch({ reports: updatedReports })
+    },
+    [patch],
+  )
+
   const reset = useCallback(async () => {
     const snapshot = await repo.reset()
     prevStatuses.current = null
@@ -174,6 +182,7 @@ export function useKafeStore(notify: Notify) {
     myRatings: data.myRatings,
     watches: data.watches,
     submitReport,
+    likeReport,
     rate,
     toggleWatch,
     redeem,

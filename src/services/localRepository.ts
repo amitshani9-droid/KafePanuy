@@ -22,6 +22,7 @@ export const localRepository: KafeRepository = {
   },
 
   submitReport: async (input) => store.submitReport(input),
+  likeReport: async (reportId) => store.likeReport(reportId),
 
   rateCart: async (cartId, stars) => {
     const result = store.rateCart(cartId, stars)

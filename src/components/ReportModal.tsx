@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Check, Send } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Camera, Check, Send, X } from 'lucide-react'
 import type { CoffeeCart, CrowdStatus, LatLng, ReportInput } from '../types/cart'
 import {
   MAX_REPORT_WAIT,
@@ -58,12 +58,17 @@ export default function ReportModal({ cart, userLocation, onClose, onSubmit }: R
     }
   }, [userLocation])
 
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const isGpsVerified = useMemo(() => {
     if (!userCoords) return false
     return distanceKm(userCoords, cart.coordinates) <= GPS_VERIFICATION_RADIUS_KM
   }, [userCoords, cart.coordinates])
 
-  const pointsToAward = isGpsVerified ? REPORT_BASE_POINTS + REPORT_GPS_BONUS : REPORT_BASE_POINTS
+  const photoBonus = imageUrl ? 10 : 0
+  const pointsToAward =
+    (isGpsVerified ? REPORT_BASE_POINTS + REPORT_GPS_BONUS : REPORT_BASE_POINTS) + photoBonus
 
   function pickStatus(next: CrowdStatus) {
     setStatus(next)
@@ -82,6 +87,18 @@ export default function ReportModal({ cart, userLocation, onClose, onSubmit }: R
     setTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
   }
 
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setImageUrl(reader.result)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
   function submit() {
     if (!status) return
     onSubmit({
@@ -91,6 +108,7 @@ export default function ReportModal({ cart, userLocation, onClose, onSubmit }: R
       fieldTags: tags,
       note,
       verifiedGps: isGpsVerified,
+      imageUrl: imageUrl ?? undefined,
     })
   }
 
@@ -208,6 +226,47 @@ export default function ReportModal({ cart, userLocation, onClose, onSubmit }: R
                 </button>
               )
             })}
+          </div>
+
+          {/* Photo attachment */}
+          <div className="mt-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleImageChange}
+              className="hidden"
+            />
+            {imageUrl ? (
+              <div className="relative inline-block overflow-hidden rounded-xl border border-forest/15 bg-oat/50 shadow-sm">
+                <img
+                  src={imageUrl}
+                  alt="תמונת מצב מהשטח"
+                  className="h-28 w-36 object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setImageUrl(null)}
+                  className="absolute top-1.5 start-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-ink/70 text-white transition hover:bg-ink"
+                  aria-label="הסר תמונה"
+                >
+                  <X size={14} />
+                </button>
+                <div className="absolute bottom-1 right-1 rounded bg-forest/80 px-1.5 py-0.5 text-[10px] font-bold text-cream">
+                  +10 נק׳ בונוס ✨
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 rounded-xl border border-dashed border-forest/30 bg-surface px-4 py-2.5 text-sm font-medium text-forest transition hover:bg-oat active:scale-95"
+              >
+                <Camera size={18} />
+                <span>הוסף תמונת שטח (+10 נק׳)</span>
+              </button>
+            )}
           </div>
 
           <label className="mt-3 block">

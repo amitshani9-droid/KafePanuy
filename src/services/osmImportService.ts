@@ -4,12 +4,19 @@ import { statusForWait } from '../data/rewards'
 import { estimateWaitNow } from '../utils/forecast'
 import { getDistanceKm } from '../utils/recommendations'
 
-const OVERPASS_URL = 'https://overpass-api.de/api/interpreter'
+const OVERPASS_ENDPOINTS = [
+  // Same-origin proxy via Netlify _redirects to bypass CORS in production
+  '/api/overpass/interpreter',
+  // Public Overpass endpoints
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+]
+
 /** Overpass is a shared free service — keep searches to roughly city-sized areas. */
 export const MAX_SEARCH_DIAGONAL_KM = 45
 const MAX_RESULTS = 250
-/** The public instance is often slow (20–30 s per query when busy) */
-const TIMEOUT_MS = 60_000
+/** Timeout per endpoint attempt */
+const TIMEOUT_MS = 25_000
 /** Backoff between attempts when the server is at capacity, as Overpass asks */
 const RETRY_DELAYS_MS = [2_000, 5_000]
 
@@ -125,26 +132,43 @@ export async function fetchCafesInBounds(bounds: MapBounds): Promise<CoffeeCart[
 }
 
 async function queryOverpass(query: string): Promise<CoffeeCart[]> {
-  const controller = new AbortController()
-  const timer = window.setTimeout(() => controller.abort(), TIMEOUT_MS)
-  let res: Response
-  try {
-    res = await fetch(OVERPASS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `data=${encodeURIComponent(query)}`,
-      signal: controller.signal,
-    })
-  } catch {
-    throw new OsmSearchError(controller.signal.aborted ? 'timeout' : 'network')
-  } finally {
-    window.clearTimeout(timer)
+  const endpoints =
+    typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+      ? OVERPASS_ENDPOINTS
+      : ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter']
+
+  let lastError: Error | null = null
+
+  for (const endpoint of endpoints) {
+    const controller = new AbortController()
+    const timer = window.setTimeout(() => controller.abort(), TIMEOUT_MS)
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `data=${encodeURIComponent(query)}`,
+        signal: controller.signal,
+      })
+
+      if ([429, 502, 503, 504].includes(res.status)) {
+        lastError = new OsmSearchError('busy')
+        continue
+      }
+      if (!res.ok) {
+        lastError = new OsmSearchError('network')
+        continue
+      }
+
+      const data = (await res.json()) as { elements?: OverpassElement[] }
+      const now = new Date()
+      return (data.elements ?? []).map((el) => toCart(el, now)).filter((c): c is CoffeeCart => c !== null)
+    } catch {
+      lastError = new OsmSearchError(controller.signal.aborted ? 'timeout' : 'network')
+      continue
+    } finally {
+      window.clearTimeout(timer)
+    }
   }
 
-  if ([429, 502, 503, 504].includes(res.status)) throw new OsmSearchError('busy')
-  if (!res.ok) throw new OsmSearchError('network')
-
-  const data = (await res.json()) as { elements?: OverpassElement[] }
-  const now = new Date()
-  return (data.elements ?? []).map((el) => toCart(el, now)).filter((c): c is CoffeeCart => c !== null)
+  throw lastError ?? new OsmSearchError('network')
 }

@@ -9,6 +9,7 @@ import ReportButton from './ReportButton'
 import HourlyForecastChart from './HourlyForecastChart'
 import { isDealActive, RATING_POINTS } from '../services/cartService'
 import { minutesUntil } from '../utils/time'
+import { getGoogleMapsUrl, getWazeUrl } from '../utils/navigation'
 
 interface CartDetailsDrawerProps {
   cart: CoffeeCart
@@ -137,8 +138,6 @@ export default function CartDetailsDrawer({
   const status = STATUS_META[cart.status]
   const closeRef = useRef<HTMLButtonElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const { lat, lng } = cart.coordinates
-
   useEffect(() => {
     closeRef.current?.focus({ preventScroll: true })
     scrollRef.current?.scrollTo({ top: 0 })
@@ -362,7 +361,7 @@ export default function CartDetailsDrawer({
       {/* Actions */}
       <footer className="grid grid-cols-2 gap-2 border-t border-forest/10 bg-cream px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <a
-          href={`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`}
+          href={getWazeUrl(cart.coordinates)}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 rounded-xl bg-forest py-3 text-sm font-bold text-cream transition hover:bg-forest-light active:scale-[0.98]"
@@ -371,7 +370,7 @@ export default function CartDetailsDrawer({
           ניווט ב-Waze
         </a>
         <a
-          href={`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`}
+          href={getGoogleMapsUrl(cart.coordinates, cart.name)}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 rounded-xl bg-surface py-3 text-sm font-bold text-forest ring-1 ring-forest/20 transition hover:bg-oat active:scale-[0.98]"

@@ -27,6 +27,7 @@ export interface KafeRepository {
   reset(): Promise<AppSnapshot>
 
   submitReport(input: ReportInput): Promise<{ carts: CoffeeCart[]; report: FieldReport } & PointsUpdate>
+  likeReport(reportId: string): Promise<FieldReport[]>
   rateCart(cartId: string, stars: number): Promise<{ ratings: MyRatings; firstTime: boolean } & PointsUpdate>
   toggleWatch(cartId: string): Promise<string[]>
   redeemReward(reward: Reward): Promise<{ redemption: Redemption; points: number } | null>

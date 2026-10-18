@@ -66,9 +66,14 @@ export interface FieldReport {
   pointsEarned: number
   createdAt: string
   verifiedGps?: boolean
+  imageUrl?: string
+  likesCount?: number
 }
 
-export type ReportInput = Pick<FieldReport, 'cartId' | 'status' | 'waitMinutes' | 'fieldTags' | 'note' | 'verifiedGps'>
+export type ReportInput = Pick<
+  FieldReport,
+  'cartId' | 'status' | 'waitMinutes' | 'fieldTags' | 'note' | 'verifiedGps' | 'imageUrl'
+>
 
 export interface Reward {
   id: string

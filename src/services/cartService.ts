@@ -20,7 +20,7 @@ const LEGACY_KEYS = ['kafe-panuy:v1:carts']
 
 const STARTING_POINTS = 120
 /** Carts closer than this are treated as the same place when importing */
-const DUPLICATE_RADIUS_KM = 0.04
+export const DUPLICATE_RADIUS_KM = 0.04
 const MAX_STORED = 50
 
 function read<T>(key: string, fallback: T): T {
@@ -261,8 +261,20 @@ export function submitReport(input: ReportInput): ReportResult {
   const now = new Date().toISOString()
   const note = input.note?.trim() || undefined
   const verifiedGps = Boolean(input.verifiedGps)
-  const pointsEarned = verifiedGps ? REPORT_BASE_POINTS + REPORT_GPS_BONUS : REPORT_BASE_POINTS
-  const report: FieldReport = { ...input, note, id: makeId(), pointsEarned, verifiedGps, createdAt: now }
+  const imageBonus = input.imageUrl ? 10 : 0
+  const pointsEarned = verifiedGps
+    ? REPORT_BASE_POINTS + REPORT_GPS_BONUS + imageBonus
+    : REPORT_BASE_POINTS + imageBonus
+  const report: FieldReport = {
+    ...input,
+    note,
+    id: makeId(),
+    pointsEarned,
+    verifiedGps,
+    imageUrl: input.imageUrl,
+    likesCount: 0,
+    createdAt: now,
+  }
 
   const carts = getCarts().map((c) =>
     c.id === input.cartId
@@ -284,6 +296,14 @@ export function submitReport(input: ReportInput): ReportResult {
   const points = addPoints(pointsEarned)
 
   return { carts, report, points, lifetimePoints: getLifetimePoints() }
+}
+
+export function likeReport(reportId: string): FieldReport[] {
+  const reports = getReports().map((r) =>
+    r.id === reportId ? { ...r, likesCount: (r.likesCount ?? 0) + 1 } : r,
+  )
+  write(KEYS.reports, reports)
+  return reports
 }
 
 // ---------- Rewards ----------
