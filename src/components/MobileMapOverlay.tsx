@@ -21,7 +21,7 @@ export default function MobileMapOverlay({ filters, onOpenFilters, hideCounter, 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[1100] space-y-2 bg-gradient-to-b from-cream/95 via-cream/65 to-transparent px-3.5 pt-[max(0.75rem,env(safe-area-inset-top))] pb-6">
         <div className="pointer-events-auto flex items-center gap-2">
           <span
-            className="shrink-0 flex items-center justify-center rounded-2xl bg-surface/90 p-1.5 shadow-[0_4px_16px_rgba(27,67,50,0.12)] ring-1 ring-forest/15 backdrop-blur-xl"
+            className="shrink-0 flex items-center justify-center rounded-2xl bg-surface/90 p-1.5 shadow-[0_4px_16px_rgba(58,36,24,0.12)] ring-1 ring-forest/15 backdrop-blur-xl"
             title="קפה פנוי"
           >
             <LogoMark size="sm" />
@@ -37,7 +37,7 @@ export default function MobileMapOverlay({ filters, onOpenFilters, hideCounter, 
         <button
           type="button"
           onClick={onShowFree}
-          className="absolute start-3.5 bottom-4 z-[1000] flex items-center gap-2.5 rounded-full bg-surface/92 px-4 py-2.5 text-xs font-bold text-forest shadow-[0_8px_24px_rgba(27,67,50,0.14)] ring-1 ring-forest/15 backdrop-blur-xl transition-all duration-150 active:scale-95"
+          className="absolute start-3.5 bottom-4 z-[1000] flex items-center gap-2.5 rounded-full bg-surface/92 px-4 py-2.5 text-xs font-bold text-forest shadow-[0_8px_24px_rgba(58,36,24,0.14)] ring-1 ring-forest/15 backdrop-blur-xl transition-all duration-150 active:scale-95"
         >
           <span className="relative flex h-2.5 w-2.5">
             <span className="absolute inline-flex h-full w-full rounded-full bg-calm animate-live-dot opacity-75" />

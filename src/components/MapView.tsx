@@ -397,7 +397,7 @@ export default function MapView({
           disabled={locating}
           aria-label="המיקום שלי"
           title="המיקום שלי"
-          className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-surface/92 backdrop-blur-xl text-forest shadow-[0_8px_24px_rgba(27,67,50,0.15)] ring-1 ring-forest/15 transition hover:bg-surface active:scale-90 disabled:opacity-70"
+          className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-surface/92 backdrop-blur-xl text-forest shadow-[0_8px_24px_rgba(58,36,24,0.15)] ring-1 ring-forest/15 transition hover:bg-surface active:scale-90 disabled:opacity-70"
         >
           {locating ? <Loader2 size={20} className="animate-spin text-forest" /> : <LocateFixed size={20} />}
         </button>

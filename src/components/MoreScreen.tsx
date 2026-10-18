@@ -54,18 +54,18 @@ export default function MoreScreen({
       <button
         type="button"
         onClick={onOpenWallet}
-        className="mt-5 flex w-full items-center gap-4 rounded-3xl bg-gradient-to-bl from-forest to-forest-light p-4 text-start text-cream shadow-lg"
+        className="relative mt-5 flex w-full items-center gap-4 overflow-hidden rounded-3xl bg-gradient-to-br from-[#2D1B13] via-[#3A2418] to-[#4F2F1E] p-4 text-start text-cream shadow-[0_12px_32px_rgba(58,36,24,0.22)] ring-1 ring-[#C8772C]/30 transition active:scale-95"
       >
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-3xl" aria-hidden="true">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-3xl shadow-inner ring-1 ring-white/15" aria-hidden="true">
           {rank.emoji}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-sm text-cream/75">הדרגה שלך</span>
-          <span className="block font-display text-lg font-bold">{rank.title}</span>
+          <span className="block text-xs font-semibold uppercase tracking-wider text-[#DDA776]">מועדון קפה פנוי VIP</span>
+          <span className="block font-display text-xl font-bold text-white">{rank.title}</span>
         </span>
         <span className="text-end">
-          <span className="block font-display text-2xl font-bold leading-none">{points}</span>
-          <span className="text-xs text-cream/75">נקודות</span>
+          <span className="block font-display text-3xl font-extrabold leading-none text-[#F6EFE4]">{points}</span>
+          <span className="text-xs font-medium text-cream/70">נקודות</span>
         </span>
       </button>
 

@@ -36,40 +36,40 @@ function CouponView({ reward, redemption, onBack }: { reward: Reward; redemption
 
   return (
     <div className="pt-2">
-      <div className="overflow-hidden rounded-3xl bg-forest text-cream shadow-xl">
+      <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-[#2D1B13] via-[#3A2418] to-[#4A2D1F] text-cream shadow-[0_16px_40px_rgba(58,36,24,0.25)] ring-1 ring-[#C8772C]/30">
         <div className="px-5 pt-5 pb-4 text-center">
           <div className="text-4xl" aria-hidden="true">{reward.emoji}</div>
-          <div className="mt-1 font-display text-xl font-bold">{reward.title}</div>
-          <div className="text-sm text-cream/75">{reward.description}</div>
+          <div className="mt-1 font-display text-2xl font-bold text-white">{reward.title}</div>
+          <div className="mt-0.5 text-sm text-cream/80">{reward.description}</div>
         </div>
 
         {/* Perforated divider */}
         <div className="relative flex items-center" aria-hidden="true">
-          <span className="absolute -start-3 h-6 w-6 rounded-full bg-cream" />
-          <span className="mx-4 flex-1 border-t-2 border-dashed border-cream/25" />
-          <span className="absolute -end-3 h-6 w-6 rounded-full bg-cream" />
+          <span className="absolute -start-3 h-6 w-6 rounded-full bg-cream ring-1 ring-forest/10" />
+          <span className="mx-4 flex-1 border-t-2 border-dashed border-[#C8772C]/40" />
+          <span className="absolute -end-3 h-6 w-6 rounded-full bg-cream ring-1 ring-forest/10" />
         </div>
 
         <div className="flex flex-col items-center px-5 pt-4 pb-5">
-          <div className="rounded-2xl bg-white p-3 shadow-inner">
+          <div className="rounded-2xl bg-white p-3 shadow-inner ring-4 ring-white/10">
             <FakeQrCode value={redemption.code} />
           </div>
-          <div dir="ltr" className="mt-3 font-display text-2xl font-bold tracking-[0.2em]">
+          <div dir="ltr" className="mt-3 font-display text-2xl font-black tracking-[0.25em] text-[#F6EFE4]">
             {redemption.code}
           </div>
-          <div className="mt-2 flex items-center gap-1.5 text-sm text-cream/80">
-            <ScanLine size={16} />
-            הציגו את המסך לבריסטה בקופה
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-cream/80">
+            <ScanLine size={15} className="text-[#DDA776]" />
+            הציגו את המסך לבריסטה בעגלה לקבלת ההטבה
           </div>
           <div
-            className={`mt-3 flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold ${
-              left > 0 ? 'bg-calm/20 text-calm' : 'bg-busy/20 text-busy'
+            className={`mt-3 flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold ${
+              left > 0 ? 'bg-[#2F9E6A]/20 text-[#A3E5C2] ring-1 ring-[#2F9E6A]/30' : 'bg-busy/20 text-busy ring-1 ring-busy/30'
             }`}
           >
             <Clock size={14} />
             {left > 0 ? (
               <span>
-                בתוקף עוד <span dir="ltr" className="font-display">{mm}:{ss}</span>
+                בתוקף עוד <span dir="ltr" className="font-display font-black">{mm}:{ss}</span>
               </span>
             ) : (
               'פג תוקף'
@@ -81,7 +81,7 @@ function CouponView({ reward, redemption, onBack }: { reward: Reward; redemption
       <button
         type="button"
         onClick={onBack}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-surface py-3 text-sm font-bold text-forest ring-1 ring-forest/15 hover:bg-oat"
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-surface py-3 text-sm font-bold text-forest ring-1 ring-forest/15 hover:bg-oat active:scale-95 transition"
       >
         <ArrowRight size={16} />
         חזרה לארנק
@@ -109,28 +109,39 @@ export function WalletContent({ points, lifetimePoints, reports, carts, onRedeem
         </div>
       ) : (
         <div className="space-y-6 pt-2">
-          {/* Balance + rank */}
-          <section className="rounded-3xl bg-gradient-to-bl from-forest to-forest-light p-5 text-cream shadow-lg">
-            <div className="flex items-start justify-between gap-3">
+          {/* Balance + rank (VIP Café Member Card) */}
+          <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#2D1B13] via-[#3A2418] to-[#4F2F1E] p-5 text-cream shadow-[0_12px_36px_rgba(58,36,24,0.22)] ring-1 ring-[#C8772C]/30">
+            {/* Subtle background luxury stamp */}
+            <div className="pointer-events-none absolute -bottom-8 -end-8 font-display text-8xl font-black text-white/[0.04] select-none">
+              ☕
+            </div>
+            <div className="relative z-10 flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm text-cream/75">הדרגה שלך</div>
-                <div className="font-display text-xl font-bold">
-                  {rank.title} {rank.emoji}
+                <div className="text-xs font-medium tracking-wide text-cream/70">מועדון קפה פנוי VIP</div>
+                <div className="mt-0.5 font-display text-2xl font-bold text-white flex items-center gap-2">
+                  <span>{rank.title}</span>
+                  <span className="text-xl">{rank.emoji}</span>
                 </div>
               </div>
               <div className="text-end">
-                <div className="font-display text-4xl font-bold leading-none">{points}</div>
-                <div className="text-sm text-cream/75">נקודות קפה</div>
+                <div className="font-display text-4xl font-extrabold leading-none text-[#F6EFE4] tracking-tight">{points}</div>
+                <div className="mt-1 text-xs font-semibold text-[#DDA776]">נקודות זמינות</div>
               </div>
             </div>
-            <div className="mt-4">
-              <div className="h-2 overflow-hidden rounded-full bg-white/15">
-                <div className="h-full rounded-full bg-espresso transition-all" style={{ width: `${progress * 100}%` }} />
+            <div className="relative z-10 mt-5">
+              <div className="h-2.5 overflow-hidden rounded-full bg-black/30 p-0.5 ring-1 ring-white/10">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[#C8772C] to-[#E59E58] shadow-[0_0_8px_rgba(200,119,44,0.6)] transition-all duration-500"
+                  style={{ width: `${progress * 100}%` }}
+                />
               </div>
-              <div className="mt-1.5 text-xs text-cream/75">
-                {rank.next
-                  ? `עוד ${rank.next.min - lifetimePoints} נק׳ לדרגת ${rank.next.title} ${rank.next.emoji}`
-                  : 'הגעת לפסגה — אגדה אמיתית! 👑'}
+              <div className="mt-2 flex items-center justify-between text-xs text-cream/80">
+                <span>
+                  {rank.next
+                    ? `עוד ${rank.next.min - lifetimePoints} נק׳ לדרגת ${rank.next.title} ${rank.next.emoji}`
+                    : 'הגעת לפסגה — אגדה אמיתית! 👑'}
+                </span>
+                <span className="font-display text-[11px] font-bold text-[#DDA776]">{Math.round(progress * 100)}%</span>
               </div>
             </div>
           </section>
@@ -147,7 +158,7 @@ export function WalletContent({ points, lifetimePoints, reports, carts, onRedeem
                 return (
                   <li
                     key={reward.id}
-                    className="flex items-center gap-3 rounded-3xl bg-surface p-3.5 shadow-[0_4px_16px_rgba(27,67,50,0.04)] ring-1 ring-forest/10"
+                    className="flex items-center gap-3 rounded-3xl bg-surface p-3.5 shadow-[0_4px_16px_rgba(58,36,24,0.04)] ring-1 ring-forest/10"
                   >
                     <span
                       className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-oat/90 text-2xl shadow-inner ring-1 ring-forest/10"

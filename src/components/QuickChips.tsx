@@ -37,7 +37,7 @@ function Chip({
           ? 'bg-forest text-cream shadow-md shadow-forest/20 ring-1 ring-forest'
           : `${
               floating
-                ? 'bg-surface/92 backdrop-blur-xl shadow-[0_4px_16px_rgba(27,67,50,0.08)]'
+                ? 'bg-surface/92 backdrop-blur-xl shadow-[0_4px_16px_rgba(58,36,24,0.08)]'
                 : 'bg-surface shadow-xs'
             } text-forest ring-1 ring-forest/15 hover:bg-surface/95`
       }`}

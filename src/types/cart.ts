@@ -47,6 +47,7 @@ export interface CoffeeCart {
   ownerVerified?: boolean
   /** True when the latest live report was submitted within 350m of the cart */
   verifiedGps?: boolean
+  imageUrl?: string
   flashDeal?: FlashDeal
 }
 

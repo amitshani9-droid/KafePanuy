@@ -10,6 +10,7 @@ import HourlyForecastChart from './HourlyForecastChart'
 import { isDealActive, RATING_POINTS } from '../services/cartService'
 import { minutesUntil } from '../utils/time'
 import { getGoogleMapsUrl, getWazeUrl } from '../utils/navigation'
+import { getCartPhoto } from '../utils/cartImages'
 
 interface CartDetailsDrawerProps {
   cart: CoffeeCart
@@ -156,47 +157,71 @@ export default function CartDetailsDrawer({
       key={cart.id}
       role="dialog"
       aria-label={`פרטים על ${cart.name}`}
-      className="absolute inset-x-0 bottom-0 z-[1200] flex max-h-[82%] flex-col rounded-t-[32px] bg-cream shadow-[0_-12px_40px_rgba(27,67,50,0.22)] animate-drawer-up md:inset-y-0 md:start-0 md:end-auto md:max-h-none md:w-[400px] md:rounded-none md:border-e md:border-forest/10 md:shadow-xl md:animate-drawer-side"
+      className="absolute inset-x-0 bottom-0 z-[1200] flex max-h-[85%] flex-col overflow-hidden rounded-t-[36px] bg-cream shadow-[0_-16px_50px_rgba(58,36,24,0.25)] animate-drawer-up md:inset-y-0 md:start-0 md:end-auto md:max-h-none md:w-[420px] md:rounded-none md:border-e md:border-forest/10 md:shadow-xl md:animate-drawer-side"
     >
-      {/* Grab handle (mobile) */}
-      <div className="flex justify-center pt-2.5 pb-1 md:hidden" aria-hidden="true">
-        <span className="h-1.5 w-12 rounded-full bg-forest/25 shadow-xs" />
-      </div>
+      {/* Cover Image with gradient overlay and action buttons */}
+      <div className="relative h-52 w-full shrink-0 overflow-hidden bg-oat">
+        <img
+          src={getCartPhoto(cart)}
+          alt={cart.name}
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-cream via-black/25 to-black/60 pointer-events-none" />
 
-      {/* Header */}
-      <header className="flex items-start gap-3 px-5 pt-2 pb-3 md:pt-5">
-        <div className="min-w-0 flex-1">
-          <h2 className="font-display text-2xl font-bold text-forest">{cart.name}</h2>
-          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-ink/65">
-            <MapPin size={13} className="shrink-0 text-forest/70" />
+        {/* Grab handle (mobile) floating on image */}
+        <div className="absolute top-2.5 inset-x-0 flex justify-center md:hidden" aria-hidden="true">
+          <span className="h-1.5 w-12 rounded-full bg-white/75 shadow-sm" />
+        </div>
+
+        {/* Floating Top Header Buttons */}
+        <div className="absolute top-3.5 inset-x-4 flex items-center justify-between">
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={onClose}
+            aria-label="סגור"
+            className="flex h-9 w-9 items-center justify-center rounded-2xl bg-black/40 backdrop-blur-md text-white shadow-xs hover:bg-black/60 active:scale-90 transition-all"
+          >
+            <X size={18} />
+          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onToggleWatch}
+              aria-label={watching ? 'הפסק לעקוב' : 'קבל התראה כשיתפנה'}
+              className={`flex h-9 w-9 items-center justify-center rounded-2xl backdrop-blur-md shadow-xs active:scale-90 transition-all ${
+                watching ? 'bg-espresso text-white' : 'bg-black/40 text-white hover:bg-black/60'
+              }`}
+            >
+              {watching ? <BellOff size={16} /> : <Bell size={16} />}
+            </button>
+            <button
+              type="button"
+              onClick={onShare}
+              aria-label="שתף את העגלה"
+              className="flex h-9 w-9 items-center justify-center rounded-2xl bg-black/40 backdrop-blur-md text-white shadow-xs hover:bg-black/60 active:scale-90 transition-all"
+            >
+              <Share2 size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom of hero photo: Cart Name & Area */}
+        <div className="absolute bottom-2.5 inset-x-5">
+          <h2 className="font-display text-3xl font-black text-forest drop-shadow-xs tracking-tight">{cart.name}</h2>
+          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-ink/80 font-medium">
+            <MapPin size={12} className="text-espresso" />
             <span>{cart.area}</span>
             {distanceKm !== null && (
-              <span className="rounded-full bg-oat px-2 py-0.5 font-bold text-forest">
+              <span className="rounded-full bg-surface/85 backdrop-blur-xs px-2 py-0.5 font-bold text-forest text-[11px] shadow-2xs">
                 {formatDistance(distanceKm)} ממך
               </span>
             )}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onShare}
-          aria-label="שתף את העגלה"
-          className="shrink-0 flex h-9 w-9 items-center justify-center rounded-2xl bg-surface text-forest shadow-xs ring-1 ring-forest/15 hover:bg-oat active:scale-90 transition-all"
-        >
-          <Share2 size={16} />
-        </button>
-        <button
-          ref={closeRef}
-          type="button"
-          onClick={onClose}
-          aria-label="סגור"
-          className="shrink-0 flex h-9 w-9 items-center justify-center rounded-2xl bg-surface text-forest shadow-xs ring-1 ring-forest/15 hover:bg-oat active:scale-90 transition-all"
-        >
-          <X size={16} />
-        </button>
-      </header>
+      </div>
 
-      <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pb-5 touch-scroll">
+      <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pt-3 pb-5 touch-scroll">
         {/* Status + wait */}
         <div className="flex items-stretch gap-3">
           <div className={`flex flex-1 items-center gap-3.5 rounded-3xl p-3.5 shadow-xs ring-1 ring-black/5 ${status.softBgClass}`}>

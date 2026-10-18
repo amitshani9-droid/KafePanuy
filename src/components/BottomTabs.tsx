@@ -21,7 +21,7 @@ export default function BottomTabs({ tab, onChange, points }: BottomTabsProps) {
   return (
     <nav
       aria-label="ניווט ראשי"
-      className="z-[1300] border-t border-forest/10 bg-surface/90 backdrop-blur-2xl px-2 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-8px_30px_rgba(27,67,50,0.08)]"
+      className="z-[1300] border-t border-forest/10 bg-surface/90 backdrop-blur-2xl px-2 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-8px_30px_rgba(58,36,24,0.08)]"
     >
       <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
         {TABS.map(({ id, label, Icon }) => {

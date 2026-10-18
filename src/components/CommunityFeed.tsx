@@ -4,6 +4,7 @@ import type { CoffeeCart, FieldReport } from '../types/cart'
 import { STATUS_META } from '../data/filters'
 import { updatedLabel } from '../utils/time'
 import { getWazeUrl } from '../utils/navigation'
+import { getCartPhoto } from '../utils/cartImages'
 
 interface CommunityFeedProps {
   reports: FieldReport[]
@@ -63,26 +64,34 @@ export default function CommunityFeed({
         </span>
       </header>
 
-      {/* Floating prompt or quick report banner */}
-      <div className="mb-4 flex items-center justify-between rounded-2xl bg-gradient-to-r from-forest to-forest-light p-3.5 text-cream shadow-md shadow-forest/20">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 text-lg">
-            ☕
-          </span>
-          <div>
-            <p className="text-xs font-bold">נמצאים בעגלת קפה?</p>
-            <p className="text-[11px] text-cream/80">שתפו תמונת מצב וקבלו עד +70 נקודות!</p>
+      {/* Editorial community hero banner */}
+      <div className="relative mb-5 overflow-hidden rounded-3xl p-4 shadow-[0_12px_32px_rgba(58,36,24,0.18)] ring-1 ring-forest/15">
+        <img
+          src="/images/hero.jpg"
+          alt="עגלת קפה בטבע"
+          className="absolute inset-0 h-full w-full object-cover object-center filter brightness-[0.45] contrast-[1.05]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-forest via-forest/60 to-transparent" />
+        <div className="relative z-10 flex items-center justify-between gap-3 text-cream">
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-2xl backdrop-blur-md ring-1 ring-white/20">
+              ☕
+            </span>
+            <div>
+              <p className="font-display text-base font-bold text-white drop-shadow-sm">נמצאים בעגלת קפה עכשיו?</p>
+              <p className="text-xs text-cream/90">שתפו תמונת מצב מהשטח וקבלו עד +70 נקודות!</p>
+            </div>
           </div>
+          {carts.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onSelectCart(carts[0].id)}
+              className="shrink-0 rounded-2xl bg-surface px-3.5 py-2 text-xs font-bold text-forest shadow-md transition hover:bg-cream active:scale-95"
+            >
+              דווח עכשיו
+            </button>
+          )}
         </div>
-        {carts.length > 0 && (
-          <button
-            type="button"
-            onClick={() => onSelectCart(carts[0].id)}
-            className="rounded-xl bg-surface px-3 py-1.5 text-xs font-bold text-forest shadow-xs transition hover:bg-cream active:scale-95"
-          >
-            דווח עכשיו
-          </button>
-        )}
       </div>
 
       <div className="space-y-4">
@@ -99,7 +108,7 @@ export default function CommunityFeed({
           return (
             <article
               key={report.id}
-              className="overflow-hidden rounded-3xl bg-surface p-4 shadow-[0_4px_20px_rgba(27,67,50,0.06)] ring-1 ring-forest/10 transition-all duration-200 hover:shadow-[0_8px_30px_rgba(27,67,50,0.12)]"
+              className="overflow-hidden rounded-3xl bg-surface p-4 shadow-[0_4px_20px_rgba(58,36,24,0.06)] ring-1 ring-forest/10 transition-all duration-200 hover:shadow-[0_8px_30px_rgba(58,36,24,0.12)]"
             >
               {/* Header with Avatar */}
               <div className="flex items-start justify-between gap-3">
@@ -148,16 +157,19 @@ export default function CommunityFeed({
               )}
 
               {/* Photo */}
-              {report.imageUrl && (
-                <div className="mt-3 overflow-hidden rounded-2xl border border-forest/10 shadow-inner max-h-56">
-                  <img
-                    src={report.imageUrl}
-                    alt={`תמונה מ${name}`}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-              )}
+              {(() => {
+                const photo = report.imageUrl || (cart ? getCartPhoto(cart) : null)
+                return photo ? (
+                  <div className="mt-3 overflow-hidden rounded-2xl border border-forest/10 shadow-inner h-44 w-full bg-oat">
+                    <img
+                      src={photo}
+                      alt={`תמונה מ${name}`}
+                      className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                      loading="lazy"
+                    />
+                  </div>
+                ) : null
+              })()}
 
               {/* Tags */}
               {report.fieldTags.length > 0 && (

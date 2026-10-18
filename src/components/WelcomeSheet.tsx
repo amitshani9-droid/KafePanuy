@@ -68,7 +68,7 @@ export default function WelcomeSheet({ onDone, onUseLocation }: WelcomeSheetProp
               <button
                 type="button"
                 onClick={() => finish(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-forest py-3.5 font-display text-base font-bold text-cream transition hover:bg-forest-light active:scale-[0.98]"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-espresso to-espresso-dark py-3.5 font-display text-base font-bold text-white shadow-md shadow-espresso/20 transition hover:brightness-105 active:scale-[0.98]"
               >
                 <LocateFixed size={18} />
                 הראו לי מה קרוב אליי
@@ -76,20 +76,20 @@ export default function WelcomeSheet({ onDone, onUseLocation }: WelcomeSheetProp
               <button
                 type="button"
                 onClick={() => finish(false)}
-                className="w-full rounded-xl py-2.5 text-sm font-bold text-forest hover:bg-oat"
+                className="w-full rounded-2xl py-2.5 text-sm font-bold text-forest hover:bg-oat active:scale-95 transition"
               >
                 אחר כך, יאללה לקפה ☕
               </button>
             </>
           ) : (
             <div className="flex gap-2">
-              <button type="button" onClick={() => finish(false)} className="rounded-xl px-4 py-3 text-sm font-bold text-forest/70 hover:bg-oat">
+              <button type="button" onClick={() => finish(false)} className="rounded-2xl px-4 py-3 text-sm font-bold text-forest/70 hover:bg-oat">
                 דלג
               </button>
               <button
                 type="button"
                 onClick={() => setI(i + 1)}
-                className="flex-1 rounded-xl bg-forest py-3 font-display font-bold text-cream transition hover:bg-forest-light active:scale-[0.98]"
+                className="flex-1 rounded-2xl bg-forest py-3.5 font-display font-bold text-cream shadow-md shadow-forest/20 transition hover:bg-forest-light active:scale-[0.98]"
               >
                 הבא
               </button>
@@ -99,14 +99,14 @@ export default function WelcomeSheet({ onDone, onUseLocation }: WelcomeSheetProp
       }
     >
       <div className="flex flex-col items-center px-2 pt-2 pb-4 text-center" aria-live="polite">
-        <div className="mb-4 flex h-28 w-28 items-center justify-center rounded-full bg-forest/10 text-5xl" aria-hidden="true">
+        <div className="mb-4 flex h-28 w-28 items-center justify-center rounded-3xl bg-oat text-5xl shadow-inner ring-1 ring-forest/10" aria-hidden="true">
           {slide.art}
         </div>
         <h2 className="font-display text-2xl font-bold text-forest">{slide.title}</h2>
-        <p className="mt-2 max-w-sm text-base text-ink/75">{slide.body}</p>
+        <p className="mt-2 max-w-sm text-base text-ink/75 leading-relaxed">{slide.body}</p>
         <div className="mt-5 flex gap-1.5" aria-label={`שלב ${i + 1} מתוך ${SLIDES.length}`}>
           {SLIDES.map((_, k) => (
-            <span key={k} className={`h-2 rounded-full transition-all ${k === i ? 'w-6 bg-forest' : 'w-2 bg-forest/20'}`} />
+            <span key={k} className={`h-2 rounded-full transition-all duration-300 ${k === i ? 'w-7 bg-espresso' : 'w-2 bg-forest/20'}`} />
           ))}
         </div>
       </div>

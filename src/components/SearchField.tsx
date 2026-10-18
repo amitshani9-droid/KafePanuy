@@ -23,7 +23,7 @@ export default function SearchField({ value, onChange, floating = false }: Searc
         enterKeyHint="search"
         className={`w-full border-0 py-3 ps-10 pe-9 text-base text-ink placeholder:text-ink/40 transition-all focus:ring-2 focus:ring-forest focus:outline-none [&::-webkit-search-cancel-button]:hidden ${
           floating
-            ? 'rounded-full bg-surface/92 backdrop-blur-xl shadow-[0_8px_30px_rgba(27,67,50,0.12)] ring-1 ring-forest/15 focus:bg-surface'
+            ? 'rounded-full bg-surface/92 backdrop-blur-xl shadow-[0_8px_30px_rgba(58,36,24,0.12)] ring-1 ring-forest/15 focus:bg-surface'
             : 'rounded-2xl bg-surface/95 shadow-sm ring-1 ring-forest/10 focus:ring-forest/30'
         }`}
       />

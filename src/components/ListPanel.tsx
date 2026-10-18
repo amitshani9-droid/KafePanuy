@@ -26,16 +26,16 @@ interface ListPanelProps {
 
   function CardSkeleton() {
     return (
-      <div className="animate-pulse rounded-3xl bg-surface p-4 ring-1 ring-forest/10" aria-hidden="true">
-        <div className="flex justify-between gap-3">
-          <div className="flex-1 space-y-2">
+      <div className="animate-pulse overflow-hidden rounded-3xl bg-surface ring-1 ring-forest/10" aria-hidden="true">
+        <div className="h-44 w-full bg-oat" />
+        <div className="p-4 space-y-2.5">
+          <div className="flex justify-between items-center gap-3">
             <div className="h-5 w-1/2 rounded bg-oat" />
-            <div className="h-3.5 w-1/3 rounded bg-oat" />
+            <div className="h-6 w-20 rounded-full bg-oat" />
           </div>
-          <div className="h-12 w-14 rounded-2xl bg-oat" />
+          <div className="h-3.5 w-1/3 rounded bg-oat" />
+          <div className="h-3.5 w-4/5 rounded bg-oat" />
         </div>
-        <div className="mt-3 h-3.5 w-full rounded bg-oat" />
-        <div className="mt-2 h-3.5 w-4/5 rounded bg-oat" />
       </div>
     )
   }
