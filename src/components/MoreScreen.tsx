@@ -48,7 +48,7 @@ export default function MoreScreen({
 }: MoreScreenProps) {
   const rank = rankFor(lifetimePoints)
   return (
-    <div className="h-full overflow-y-auto bg-cream px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-8">
+    <div className="h-full overflow-y-auto bg-cream px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-24 touch-scroll">
       <BrandLogo />
 
       <button

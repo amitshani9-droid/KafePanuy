@@ -49,51 +49,84 @@ export default function CommunityFeed({
         }))
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-16">
+    <div className="flex h-full flex-col overflow-y-auto px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-24 touch-scroll">
       <header className="mb-4 flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2 font-display text-2xl font-bold text-forest">
-            <Sparkles size={24} className="text-espresso" />
+            <Sparkles size={24} className="text-espresso animate-pulse" />
             מהשטח עכשיו
           </h1>
-          <p className="mt-0.5 text-xs text-ink/60">עדכונים, תמונות ואווירה חיה מעגלות הקפה בישראל</p>
+          <p className="mt-0.5 text-xs text-ink/65">עדכונים, תמונות ואווירה חיה מעגלות הקפה בישראל</p>
         </div>
-        <span className="rounded-full bg-forest/10 px-2.5 py-1 text-xs font-bold text-forest">
+        <span className="rounded-full bg-forest/10 px-3 py-1 font-display text-xs font-bold text-forest ring-1 ring-forest/15">
           {displayReports.length} עדכונים
         </span>
       </header>
 
-      <div className="space-y-3.5">
-        {displayReports.map((report) => {
+      {/* Floating prompt or quick report banner */}
+      <div className="mb-4 flex items-center justify-between rounded-2xl bg-gradient-to-r from-forest to-forest-light p-3.5 text-cream shadow-md shadow-forest/20">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 text-lg">
+            ☕
+          </span>
+          <div>
+            <p className="text-xs font-bold">נמצאים בעגלת קפה?</p>
+            <p className="text-[11px] text-cream/80">שתפו תמונת מצב וקבלו עד +70 נקודות!</p>
+          </div>
+        </div>
+        {carts.length > 0 && (
+          <button
+            type="button"
+            onClick={() => onSelectCart(carts[0].id)}
+            className="rounded-xl bg-surface px-3 py-1.5 text-xs font-bold text-forest shadow-xs transition hover:bg-cream active:scale-95"
+          >
+            דווח עכשיו
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-4">
+        {displayReports.map((report, idx) => {
           const cart = cartMap.get(report.cartId)
           const name = cart?.name ?? report.demoCartName ?? 'עגלת קפה'
           const area = cart?.area ?? report.demoArea ?? 'בישראל'
           const statusMeta = STATUS_META[report.status]
           const isLiked = likedReports[report.id]
           const likesCount = (report.likesCount ?? 0) + (isLiked ? 1 : 0)
+          const avatarEmojis = ['☕', '🥐', '✨', '🌿', '🍪', '🥤']
+          const avatarEmoji = avatarEmojis[idx % avatarEmojis.length]
 
           return (
             <article
               key={report.id}
-              className="overflow-hidden rounded-2xl bg-surface p-4 shadow-sm ring-1 ring-forest/10 transition hover:shadow-md"
+              className="overflow-hidden rounded-3xl bg-surface p-4 shadow-[0_4px_20px_rgba(27,67,50,0.06)] ring-1 ring-forest/10 transition-all duration-200 hover:shadow-[0_8px_30px_rgba(27,67,50,0.12)]"
             >
-              {/* Header */}
+              {/* Header with Avatar */}
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <button
-                    type="button"
-                    onClick={() => onSelectCart(report.cartId)}
-                    className="truncate text-start font-display text-base font-bold text-forest hover:underline"
-                  >
-                    {name}
-                  </button>
-                  <p className="flex items-center gap-1 text-xs text-ink/60">
-                    <MapPin size={12} className="shrink-0" />
-                    {area} · {updatedLabel(report.createdAt)}
-                  </p>
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-oat/90 text-lg shadow-inner ring-1 ring-forest/10">
+                    {avatarEmoji}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <button
+                      type="button"
+                      onClick={() => onSelectCart(report.cartId)}
+                      className="truncate text-start font-display text-base font-bold text-forest hover:underline block w-full"
+                    >
+                      {name}
+                    </button>
+                    <p className="flex items-center gap-1 text-[11px] text-ink/60 truncate">
+                      <MapPin size={11} className="shrink-0 text-forest/70" />
+                      <span>{area}</span>
+                      <span>·</span>
+                      <span>{updatedLabel(report.createdAt)}</span>
+                    </p>
+                  </div>
                 </div>
 
-                <div className={`flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${statusMeta.softBgClass} ${statusMeta.textClass}`}>
+                <div
+                  className={`flex shrink-0 items-center gap-1.5 rounded-2xl px-2.5 py-1 text-xs font-bold shadow-xs ring-1 ring-black/5 ${statusMeta.softBgClass} ${statusMeta.textClass}`}
+                >
                   <span>{statusMeta.label}</span>
                   <span>·</span>
                   <span>{report.waitMinutes} דק׳</span>
@@ -102,21 +135,21 @@ export default function CommunityFeed({
 
               {/* Verified GPS pill */}
               {report.verifiedGps && (
-                <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-calm/15 px-2 py-0.5 text-[11px] font-bold text-calm-ink">
-                  📍 דיווח מאומת GPS מהשטח
+                <div className="mt-2.5 inline-flex items-center gap-1 rounded-full bg-calm/15 px-2.5 py-0.5 text-[10.5px] font-bold text-calm-ink ring-1 ring-calm/30">
+                  📍 דיווח מאומת מהשטח (+בונוס GPS)
                 </div>
               )}
 
-              {/* Note / Tip */}
+              {/* Note / Tip bubble */}
               {report.note && (
-                <p className="mt-2 text-sm text-ink/90 leading-relaxed bg-cream/50 rounded-xl p-2.5">
+                <div className="mt-2.5 rounded-2xl bg-oat/40 p-3 text-xs leading-relaxed text-ink/85 border border-forest/5">
                   &ldquo;{report.note}&rdquo;
-                </p>
+                </div>
               )}
 
-              {/* Optional Photo */}
+              {/* Photo */}
               {report.imageUrl && (
-                <div className="mt-2.5 overflow-hidden rounded-xl border border-forest/10 max-h-48">
+                <div className="mt-3 overflow-hidden rounded-2xl border border-forest/10 shadow-inner max-h-56">
                   <img
                     src={report.imageUrl}
                     alt={`תמונה מ${name}`}
@@ -128,11 +161,11 @@ export default function CommunityFeed({
 
               {/* Tags */}
               {report.fieldTags.length > 0 && (
-                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                <div className="mt-3 flex flex-wrap gap-1.5">
                   {report.fieldTags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full bg-oat px-2 py-0.5 text-[11px] font-medium text-forest"
+                      className="rounded-full bg-oat px-2.5 py-0.5 text-[11px] font-medium text-forest ring-1 ring-forest/5"
                     >
                       {tag}
                     </span>
@@ -141,16 +174,18 @@ export default function CommunityFeed({
               )}
 
               {/* Footer Actions */}
-              <div className="mt-3 flex items-center justify-between border-t border-forest/5 pt-2 text-xs">
+              <div className="mt-3.5 flex items-center justify-between border-t border-forest/5 pt-2.5 text-xs">
                 <button
                   type="button"
                   onClick={() => handleLike(report.id)}
                   aria-label="לייק לעדכון"
-                  className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 font-bold transition active:scale-95 ${
-                    isLiked ? 'bg-busy/15 text-busy' : 'text-ink/60 hover:bg-oat'
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 font-bold transition-all duration-150 active:scale-90 ${
+                    isLiked
+                      ? 'bg-busy/15 text-busy ring-1 ring-busy/30'
+                      : 'text-ink/65 hover:bg-oat active:bg-oat'
                   }`}
                 >
-                  <Heart size={15} className={isLiked ? 'fill-busy text-busy' : ''} />
+                  <Heart size={15} className={isLiked ? 'fill-busy text-busy scale-110' : ''} />
                   <span>{likesCount > 0 ? likesCount : 'אהבתי'}</span>
                 </button>
 
@@ -158,16 +193,16 @@ export default function CommunityFeed({
                   <button
                     type="button"
                     onClick={() => onSelectCart(report.cartId)}
-                    className="rounded-lg bg-surface px-2.5 py-1 font-bold text-forest ring-1 ring-forest/15 hover:bg-oat"
+                    className="rounded-xl bg-surface px-3 py-1.5 font-bold text-forest ring-1 ring-forest/15 hover:bg-oat active:scale-95 transition"
                   >
-                    פרטי עגלה
+                    פרטים במפה
                   </button>
                   {cart && (
                     <a
                       href={getWazeUrl(cart.coordinates)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 rounded-lg bg-forest px-2.5 py-1 font-bold text-cream hover:bg-forest-light"
+                      className="flex items-center gap-1 rounded-xl bg-forest/10 px-3 py-1.5 font-bold text-forest ring-1 ring-forest/15 hover:bg-forest/20 active:scale-95 transition"
                     >
                       <Navigation size={12} />
                       Waze

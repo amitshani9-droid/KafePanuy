@@ -243,7 +243,7 @@ export default function App() {
           )}
           {tab === 'list' && <section className="h-full" aria-label="רשימת עגלות">{listPanel('mobile')}</section>}
           {tab === 'wallet' && (
-            <section className="h-full overflow-y-auto px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-8" aria-label="ארנק">
+            <section className="h-full overflow-y-auto px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-28 touch-scroll" aria-label="ארנק">
               <h1 className="mb-4 font-display text-2xl font-bold text-forest">ארנק נקודות הקפה ☕</h1>
               <WalletContent
                 points={store.points}

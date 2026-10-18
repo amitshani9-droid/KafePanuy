@@ -24,57 +24,57 @@ interface ListPanelProps {
   footer?: ReactNode
 }
 
-function CardSkeleton() {
-  return (
-    <div className="animate-pulse rounded-2xl bg-surface p-4 ring-1 ring-forest/10" aria-hidden="true">
-      <div className="flex justify-between gap-3">
-        <div className="flex-1 space-y-2">
-          <div className="h-5 w-1/2 rounded bg-oat" />
-          <div className="h-3.5 w-1/3 rounded bg-oat" />
+  function CardSkeleton() {
+    return (
+      <div className="animate-pulse rounded-3xl bg-surface p-4 ring-1 ring-forest/10" aria-hidden="true">
+        <div className="flex justify-between gap-3">
+          <div className="flex-1 space-y-2">
+            <div className="h-5 w-1/2 rounded bg-oat" />
+            <div className="h-3.5 w-1/3 rounded bg-oat" />
+          </div>
+          <div className="h-12 w-14 rounded-2xl bg-oat" />
         </div>
-        <div className="h-12 w-14 rounded-xl bg-oat" />
+        <div className="mt-3 h-3.5 w-full rounded bg-oat" />
+        <div className="mt-2 h-3.5 w-4/5 rounded bg-oat" />
       </div>
-      <div className="mt-3 h-3.5 w-full rounded bg-oat" />
-      <div className="mt-2 h-3.5 w-4/5 rounded bg-oat" />
-    </div>
-  )
-}
+    )
+  }
 
-function countLabel(n: number) {
-  if (n === 0) return 'לא מצאנו עגלות'
-  if (n === 1) return 'מצאנו עגלה אחת'
-  return `מצאנו ${n} עגלות`
-}
+  function countLabel(n: number) {
+    if (n === 0) return 'לא מצאנו עגלות'
+    if (n === 1) return 'מצאנו עגלה אחת'
+    return `מצאנו ${n} עגלות`
+  }
 
-/** Search + filters + results. The desktop side column and the phone "רשימה" tab. */
-export default function ListPanel({
-  variant,
-  filters,
-  loading,
-  origin,
-  selectedId,
-  watches,
-  onSelect,
-  onReport,
-  onOpenFilters,
-  onRegionChange,
-  onSortChange,
-  footer,
-}: ListPanelProps) {
-  const desktop = variant === 'desktop'
-  return (
-    <div className="flex h-full flex-col">
-      <div
-        className={`z-10 space-y-2.5 border-b border-forest/10 bg-cream px-4 pb-3 ${
-          desktop ? 'pt-3' : 'pt-[max(0.75rem,env(safe-area-inset-top))]'
-        }`}
-      >
-        <SearchField value={filters.query} onChange={filters.setQuery} />
-        <QuickChips filters={filters} onOpenFilters={desktop ? undefined : onOpenFilters} showTags={desktop} />
-      </div>
-      {desktop && <RegionSelector value={filters.region} onChange={onRegionChange} counts={filters.regionCounts} />}
+  /** Search + filters + results. The desktop side column and the phone "רשימה" tab. */
+  export default function ListPanel({
+    variant,
+    filters,
+    loading,
+    origin,
+    selectedId,
+    watches,
+    onSelect,
+    onReport,
+    onOpenFilters,
+    onRegionChange,
+    onSortChange,
+    footer,
+  }: ListPanelProps) {
+    const desktop = variant === 'desktop'
+    return (
+      <div className="flex h-full flex-col">
+        <div
+          className={`z-10 space-y-2.5 border-b border-forest/10 bg-cream/95 backdrop-blur-xl px-4 pb-3 ${
+            desktop ? 'pt-3' : 'pt-[max(0.75rem,env(safe-area-inset-top))]'
+          }`}
+        >
+          <SearchField value={filters.query} onChange={filters.setQuery} />
+          <QuickChips filters={filters} onOpenFilters={desktop ? undefined : onOpenFilters} showTags={desktop} />
+        </div>
+        {desktop && <RegionSelector value={filters.region} onChange={onRegionChange} counts={filters.regionCounts} />}
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto touch-scroll pb-24">
         <div className="flex items-center justify-between gap-2 px-4 pt-3 text-sm">
           <span className="text-ink/60" aria-live="polite">
             {loading ? 'טוענים עגלות…' : countLabel(filters.visibleCarts.length)}

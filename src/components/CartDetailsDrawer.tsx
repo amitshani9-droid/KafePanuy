@@ -156,55 +156,59 @@ export default function CartDetailsDrawer({
       key={cart.id}
       role="dialog"
       aria-label={`פרטים על ${cart.name}`}
-      className="absolute inset-x-0 bottom-0 z-[1200] flex max-h-[72%] flex-col rounded-t-3xl bg-cream shadow-[0_-8px_30px_rgba(27,67,50,0.18)] animate-drawer-up md:inset-y-0 md:start-0 md:end-auto md:max-h-none md:w-[400px] md:rounded-none md:border-e md:border-forest/10 md:shadow-xl md:animate-drawer-side"
+      className="absolute inset-x-0 bottom-0 z-[1200] flex max-h-[82%] flex-col rounded-t-[32px] bg-cream shadow-[0_-12px_40px_rgba(27,67,50,0.22)] animate-drawer-up md:inset-y-0 md:start-0 md:end-auto md:max-h-none md:w-[400px] md:rounded-none md:border-e md:border-forest/10 md:shadow-xl md:animate-drawer-side"
     >
       {/* Grab handle (mobile) */}
-      <div className="flex justify-center pt-2 md:hidden" aria-hidden="true">
-        <span className="h-1.5 w-10 rounded-full bg-forest/20" />
+      <div className="flex justify-center pt-2.5 pb-1 md:hidden" aria-hidden="true">
+        <span className="h-1.5 w-12 rounded-full bg-forest/25 shadow-xs" />
       </div>
 
       {/* Header */}
-      <header className="flex items-start gap-3 px-5 pt-3 pb-3 md:pt-5">
+      <header className="flex items-start gap-3 px-5 pt-2 pb-3 md:pt-5">
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-2xl font-bold text-forest">{cart.name}</h2>
-          <p className="mt-0.5 flex items-center gap-1 text-sm text-ink/60">
-            <MapPin size={14} className="shrink-0" />
-            {cart.area}
-            {distanceKm !== null && ` · ${formatDistance(distanceKm)} ממך`}
+          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-ink/65">
+            <MapPin size={13} className="shrink-0 text-forest/70" />
+            <span>{cart.area}</span>
+            {distanceKm !== null && (
+              <span className="rounded-full bg-oat px-2 py-0.5 font-bold text-forest">
+                {formatDistance(distanceKm)} ממך
+              </span>
+            )}
           </p>
         </div>
         <button
           type="button"
           onClick={onShare}
           aria-label="שתף את העגלה"
-          className="shrink-0 rounded-full bg-surface p-2 text-forest shadow-sm ring-1 ring-forest/10 hover:bg-oat"
+          className="shrink-0 flex h-9 w-9 items-center justify-center rounded-2xl bg-surface text-forest shadow-xs ring-1 ring-forest/15 hover:bg-oat active:scale-90 transition-all"
         >
-          <Share2 size={18} />
+          <Share2 size={16} />
         </button>
         <button
           ref={closeRef}
           type="button"
           onClick={onClose}
           aria-label="סגור"
-          className="shrink-0 rounded-full bg-surface p-2 text-forest shadow-sm ring-1 ring-forest/10 hover:bg-oat"
+          className="shrink-0 flex h-9 w-9 items-center justify-center rounded-2xl bg-surface text-forest shadow-xs ring-1 ring-forest/15 hover:bg-oat active:scale-90 transition-all"
         >
-          <X size={18} />
+          <X size={16} />
         </button>
       </header>
 
-      <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pb-5">
+      <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pb-5 touch-scroll">
         {/* Status + wait */}
         <div className="flex items-stretch gap-3">
-          <div className={`flex flex-1 items-center gap-3 rounded-2xl p-3 ${status.softBgClass}`}>
-            <span className={`rounded-full px-3 py-1 text-sm font-bold text-white ${status.bgClass}`}>
+          <div className={`flex flex-1 items-center gap-3.5 rounded-3xl p-3.5 shadow-xs ring-1 ring-black/5 ${status.softBgClass}`}>
+            <span className={`rounded-full px-3 py-1 text-xs font-bold text-white shadow-xs ${status.bgClass}`}>
               {status.label}
             </span>
-            <span className={`flex items-baseline gap-1 ${status.textClass}`}>
+            <span className={`flex items-baseline gap-1.5 ${status.textClass}`}>
               <span className="font-display text-3xl font-bold leading-none">{cart.waitMinutes}</span>
-              <span className="text-sm font-bold">דק׳ המתנה</span>
+              <span className="text-xs font-bold">דק׳ המתנה</span>
             </span>
           </div>
-          <div className="flex flex-col items-center justify-center rounded-2xl bg-surface px-3 ring-1 ring-forest/10">
+          <div className="flex flex-col items-center justify-center rounded-3xl bg-surface px-4 py-2 ring-1 ring-forest/10 shadow-xs">
             {cart.reviewCount > 0 ? (
               <>
                 <span className="flex items-center gap-1 font-display text-xl font-bold text-ink">
@@ -359,12 +363,12 @@ export default function CartDetailsDrawer({
       </div>
 
       {/* Actions */}
-      <footer className="grid grid-cols-2 gap-2 border-t border-forest/10 bg-cream px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <footer className="grid grid-cols-2 gap-2.5 border-t border-forest/10 bg-cream/95 backdrop-blur-xl px-5 py-3.5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <a
           href={getWazeUrl(cart.coordinates)}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 rounded-xl bg-forest py-3 text-sm font-bold text-cream transition hover:bg-forest-light active:scale-[0.98]"
+          className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-forest to-forest-light py-3.5 text-sm font-bold text-cream shadow-md shadow-forest/20 transition hover:brightness-105 active:scale-[0.97]"
         >
           <Navigation size={16} />
           ניווט ב-Waze
@@ -373,7 +377,7 @@ export default function CartDetailsDrawer({
           href={getGoogleMapsUrl(cart.coordinates, cart.name)}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 rounded-xl bg-surface py-3 text-sm font-bold text-forest ring-1 ring-forest/20 transition hover:bg-oat active:scale-[0.98]"
+          className="flex items-center justify-center gap-2 rounded-2xl bg-surface py-3.5 text-sm font-bold text-forest ring-1 ring-forest/20 shadow-xs transition hover:bg-oat active:scale-[0.97]"
         >
           <Car size={16} />
           Google Maps

@@ -11,14 +11,14 @@ export default function ReportButton({ onClick, size = 'sm' }: ReportButtonProps
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center justify-center gap-2 rounded-xl font-bold transition active:scale-[0.98] ${
+      className={`flex w-full items-center justify-center gap-2 rounded-2xl font-bold transition-all duration-150 active:scale-[0.97] ${
         size === 'lg'
-          ? 'bg-espresso py-3 text-base text-white shadow-md shadow-espresso/25 hover:brightness-105'
-          : 'bg-espresso/10 py-2 text-sm text-espresso hover:bg-espresso/15'
+          ? 'bg-gradient-to-r from-espresso to-espresso-dark py-3.5 text-base text-white shadow-md shadow-espresso/25 hover:brightness-105 ring-1 ring-espresso/30'
+          : 'bg-espresso/12 py-2.5 text-xs text-espresso hover:bg-espresso/20 ring-1 ring-espresso/20'
       }`}
     >
-      <Megaphone size={size === 'lg' ? 18 : 15} />
-      נמצא בעגלה? דווח מצב (+{REPORT_POINTS} נק׳) ☕
+      <Megaphone size={size === 'lg' ? 18 : 14} className="shrink-0 animate-bounce" />
+      <span>נמצא בעגלה? דווח (+{REPORT_POINTS} נק׳) ☕</span>
     </button>
   )
 }

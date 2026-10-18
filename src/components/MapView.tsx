@@ -372,10 +372,10 @@ export default function MapView({
               type="button"
               onClick={searchHere}
               disabled={searching}
-              className="pointer-events-auto flex items-center gap-2 rounded-full bg-forest px-4 py-2 text-sm font-bold text-cream shadow-lg transition animate-pop-in hover:bg-forest-light active:scale-95 disabled:opacity-90"
+              className="pointer-events-auto flex items-center gap-2 rounded-full bg-forest/95 backdrop-blur-xl px-4 py-2.5 text-xs font-bold text-cream shadow-lg shadow-forest/25 transition animate-pop-in hover:bg-forest active:scale-95 disabled:opacity-90 ring-1 ring-white/10"
             >
-              {searching ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
-              {searching ? 'מחפשים בתי קפה באזור… (עד דקה)' : 'חפש בתי קפה באזור הזה'}
+              {searching ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
+              {searching ? 'מחפשים עגלות באזור…' : 'חפש עגלות באזור הזה 🔍'}
             </button>
           )
         )}
@@ -383,11 +383,11 @@ export default function MapView({
 
       <div
         dir="rtl"
-        className="pointer-events-none absolute left-3 z-[1000] flex flex-col items-start gap-2"
+        className="pointer-events-none absolute left-3.5 z-[1000] flex flex-col items-start gap-2"
         style={{ bottom: bottomInset }}
       >
         {locateError && (
-          <div className="pointer-events-auto max-w-[16rem] rounded-xl bg-surface px-3 py-2 text-sm text-ink shadow-lg">
+          <div className="pointer-events-auto max-w-[16rem] rounded-2xl bg-surface/95 backdrop-blur-xl px-3.5 py-2 text-xs font-bold text-ink shadow-lg ring-1 ring-forest/10">
             {locateError}
           </div>
         )}
@@ -397,9 +397,9 @@ export default function MapView({
           disabled={locating}
           aria-label="המיקום שלי"
           title="המיקום שלי"
-          className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full bg-surface text-forest shadow-lg ring-1 ring-forest/10 transition hover:bg-oat active:scale-95 disabled:opacity-70"
+          className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-surface/92 backdrop-blur-xl text-forest shadow-[0_8px_24px_rgba(27,67,50,0.15)] ring-1 ring-forest/15 transition hover:bg-surface active:scale-90 disabled:opacity-70"
         >
-          {locating ? <Loader2 size={20} className="animate-spin" /> : <LocateFixed size={20} />}
+          {locating ? <Loader2 size={20} className="animate-spin text-forest" /> : <LocateFixed size={20} />}
         </button>
       </div>
     </div>

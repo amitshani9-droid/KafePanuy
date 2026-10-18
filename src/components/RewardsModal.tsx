@@ -141,25 +141,31 @@ export function WalletContent({ points, lifetimePoints, reports, carts, onRedeem
               <Gift size={16} />
               מימוש הטבות בעגלות
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-2.5">
               {REWARDS.map((reward) => {
                 const affordable = points >= reward.cost
                 return (
-                  <li key={reward.id} className="flex items-center gap-3 rounded-2xl bg-surface p-3 ring-1 ring-forest/10">
-                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-oat text-2xl" aria-hidden="true">
+                  <li
+                    key={reward.id}
+                    className="flex items-center gap-3 rounded-3xl bg-surface p-3.5 shadow-[0_4px_16px_rgba(27,67,50,0.04)] ring-1 ring-forest/10"
+                  >
+                    <span
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-oat/90 text-2xl shadow-inner ring-1 ring-forest/10"
+                      aria-hidden="true"
+                    >
                       {reward.emoji}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="font-bold text-ink">{reward.title}</div>
-                      <div className="text-sm text-espresso">
-                        <span className="font-display font-bold">{reward.cost}</span> נק׳
+                      <div className="text-xs font-bold text-espresso">
+                        <span className="font-display text-sm">{reward.cost}</span> נקודות
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => redeem(reward)}
                       disabled={!affordable}
-                      className="shrink-0 rounded-xl bg-espresso px-3.5 py-2 text-sm font-bold text-white transition hover:brightness-105 active:scale-95 disabled:bg-forest/10 disabled:text-forest/40"
+                      className="shrink-0 rounded-2xl bg-gradient-to-r from-espresso to-espresso-dark px-3.5 py-2 text-xs font-bold text-white shadow-xs transition-all duration-150 hover:brightness-105 active:scale-90 disabled:bg-forest/10 disabled:text-forest/40 disabled:from-transparent disabled:to-transparent disabled:shadow-none"
                     >
                       {affordable ? 'ממש הטבה' : `חסרות ${reward.cost - points}`}
                     </button>

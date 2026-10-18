@@ -62,19 +62,23 @@ export default function Modal({ title, onClose, children, footer }: ModalProps) 
 
   return (
     <div className="fixed inset-0 z-[3000] flex items-end justify-center md:items-center md:p-6">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] animate-fade-in" onClick={onClose} aria-hidden="true" />
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in transition-opacity"
+        onClick={onClose}
+        aria-hidden="true"
+      />
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative flex max-h-[92dvh] w-full flex-col rounded-t-3xl bg-cream shadow-2xl outline-none animate-drawer-up md:max-h-[88dvh] md:max-w-lg md:rounded-3xl md:animate-pop-in"
+        className="relative flex max-h-[92dvh] w-full flex-col rounded-t-[36px] bg-cream shadow-[0_-16px_50px_rgba(0,0,0,0.25)] outline-none animate-drawer-up md:max-h-[88dvh] md:max-w-lg md:rounded-3xl md:animate-pop-in"
       >
-        <div className="flex justify-center pt-2 md:hidden" aria-hidden="true">
-          <span className="h-1.5 w-10 rounded-full bg-forest/20" />
+        <div className="flex justify-center pt-2.5 pb-1 md:hidden" aria-hidden="true">
+          <span className="h-1.5 w-12 rounded-full bg-forest/25 shadow-xs" />
         </div>
-        <header className="flex items-start gap-3 px-5 pt-3 pb-2 md:pt-5">
+        <header className="flex items-start gap-3 px-5 pt-2 pb-2 md:pt-5">
           <h2 id={titleId} className="min-w-0 flex-1 font-display text-xl font-bold text-forest">
             {title}
           </h2>
@@ -82,14 +86,14 @@ export default function Modal({ title, onClose, children, footer }: ModalProps) 
             type="button"
             onClick={onClose}
             aria-label="סגור"
-            className="shrink-0 rounded-full bg-surface p-2 text-forest shadow-sm ring-1 ring-forest/10 hover:bg-oat"
+            className="shrink-0 flex h-9 w-9 items-center justify-center rounded-2xl bg-surface text-forest shadow-xs ring-1 ring-forest/15 hover:bg-oat active:scale-90 transition-all"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </header>
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5 touch-scroll">{children}</div>
         {footer && (
-          <footer className="border-t border-forest/10 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <footer className="border-t border-forest/10 bg-cream/95 backdrop-blur-xl px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             {footer}
           </footer>
         )}

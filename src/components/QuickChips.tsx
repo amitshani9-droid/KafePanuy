@@ -32,10 +32,14 @@ function Chip({
       aria-pressed={active}
       aria-label={label}
       onClick={onClick}
-      className={`flex shrink-0 items-center gap-1 rounded-full px-3.5 py-1.5 text-sm font-medium whitespace-nowrap transition active:scale-95 ${
+      className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold whitespace-nowrap transition-all duration-150 active:scale-95 ${
         active
-          ? 'bg-forest text-cream shadow-sm'
-          : `${floating ? 'bg-surface/95 shadow-md backdrop-blur' : 'bg-surface'} text-forest ring-1 ring-forest/15 hover:bg-oat`
+          ? 'bg-forest text-cream shadow-md shadow-forest/20 ring-1 ring-forest'
+          : `${
+              floating
+                ? 'bg-surface/92 backdrop-blur-xl shadow-[0_4px_16px_rgba(27,67,50,0.08)]'
+                : 'bg-surface shadow-xs'
+            } text-forest ring-1 ring-forest/15 hover:bg-surface/95`
       }`}
     >
       {children}
