@@ -21,7 +21,7 @@ describe('carts', () => {
 })
 
 describe('reports & points', () => {
-  it('updates the cart, stores the report and awards 15 points', () => {
+  it('updates the cart, stores the report and awards 40 base points', () => {
     const cart = initialCarts.find((c) => c.status === 'busy')!
     const before = store.getPoints()
     const r = store.submitReport({ cartId: cart.id, status: 'calm', waitMinutes: 3, fieldTags: ['חניה בשפע 🚗'], note: '  טיפ  ' })
@@ -29,8 +29,29 @@ describe('reports & points', () => {
     expect(updated.status).toBe('calm')
     expect(updated.dataSource).toBe('live')
     expect(updated.latestTip).toBe('טיפ')
-    expect(r.points).toBe(before + 15)
+    expect(updated.verifiedGps).toBe(false)
+    expect(r.report.verifiedGps).toBe(false)
+    expect(r.report.pointsEarned).toBe(40)
+    expect(r.points).toBe(before + 40)
     expect(store.getReports()).toHaveLength(1)
+  })
+
+  it('awards 60 points total (40 base + 20 GPS bonus) and sets verifiedGps when submitted within GPS range', () => {
+    const cart = initialCarts[0]
+    const before = store.getPoints()
+    const r = store.submitReport({
+      cartId: cart.id,
+      status: 'calm',
+      waitMinutes: 2,
+      fieldTags: [],
+      verifiedGps: true,
+    })
+    const updated = r.carts.find((c) => c.id === cart.id)!
+    expect(updated.verifiedGps).toBe(true)
+    expect(updated.dataSource).toBe('live')
+    expect(r.report.verifiedGps).toBe(true)
+    expect(r.report.pointsEarned).toBe(60)
+    expect(r.points).toBe(before + 60)
   })
 
   it('redeems only when the balance is enough', () => {

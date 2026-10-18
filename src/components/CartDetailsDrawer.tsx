@@ -243,6 +243,11 @@ export default function CartDetailsDrawer({
               {isLive ? 'דיווח חי מהשטח' : 'הערכה לפי שעות עומס'}
             </span>
           )}
+          {cart.dataSource === 'live' && cart.verifiedGps && (
+            <span className="flex items-center gap-1 rounded-full bg-calm/15 px-2.5 py-1 font-bold text-calm-ink">
+              📍 אומת מהשטח
+            </span>
+          )}
         </div>
 
         {cart.flashDeal && isDealActive(cart) && (

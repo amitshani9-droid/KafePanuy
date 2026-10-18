@@ -1,29 +1,48 @@
 import type { CoffeeCart } from '../types/cart'
 import { STATUS_META } from '../data/filters'
 
-const CART_PARAM = 'cart'
+export const CART_PARAM = 'cart'
 
 /** Cart id from the page URL (?cart=…), if any. */
-export function cartIdFromUrl(): string | null {
+export function cartIdFromUrl(search = typeof window !== 'undefined' ? window.location.search : ''): string | null {
   try {
-    return new URLSearchParams(window.location.search).get(CART_PARAM)
+    return new URLSearchParams(search).get(CART_PARAM)
   } catch {
     return null
   }
 }
 
-/** Keeps ?cart=… in the address bar in sync with the open drawer, without adding history entries. */
+/** Keeps ?cart=… in the address bar in sync with the open drawer, without adding history entries or page reloads. */
 export function syncCartInUrl(cartId: string | null): void {
-  const url = new URL(window.location.href)
-  if (cartId) url.searchParams.set(CART_PARAM, cartId)
-  else url.searchParams.delete(CART_PARAM)
-  if (url.href !== window.location.href) window.history.replaceState(null, '', url)
+  if (typeof window === 'undefined') return
+  try {
+    const url = new URL(window.location.href)
+    if (cartId) {
+      url.searchParams.set(CART_PARAM, cartId)
+    } else {
+      url.searchParams.delete(CART_PARAM)
+    }
+    const search = url.searchParams.toString()
+    const nextUrl = url.pathname + (search ? `?${search}` : '') + url.hash
+    const currentUrl = window.location.pathname + window.location.search + window.location.hash
+    if (nextUrl !== currentUrl) {
+      window.history.replaceState(null, '', nextUrl)
+    }
+  } catch {
+    // In environments with non-standard URL
+  }
 }
 
-export function cartShareUrl(cartId: string): string {
-  const url = new URL(window.location.origin + window.location.pathname)
-  url.searchParams.set(CART_PARAM, cartId)
-  return url.href
+/** Returns a deep-link URL that always includes ?cart=${cartId}. */
+export function cartShareUrl(cartId: string, baseUrl?: string): string {
+  try {
+    const base = baseUrl ?? (typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}` : 'http://localhost/')
+    const url = new URL(base)
+    url.searchParams.set(CART_PARAM, cartId)
+    return url.href
+  } catch {
+    return `/?${CART_PARAM}=${encodeURIComponent(cartId)}`
+  }
 }
 
 export type ShareResult = 'shared' | 'copied' | 'cancelled' | 'failed'

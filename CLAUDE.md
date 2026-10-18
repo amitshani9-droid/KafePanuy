@@ -101,23 +101,26 @@ Never remove these rules, and never let the map container collapse to zero heigh
 ```
 src/
   components/        # small, focused, reusable components (one per file)
+  hooks/             # app logic: useKafeStore (data + actions), useCartFilters, useSelection,
+                     # useAreaSearch, useAddCartFlow, useToast, useTheme, useMediaQuery, …
   services/
-    cartService.ts   # single source of truth for app data + localStorage persistence
-  types/             # shared TypeScript types (Cart, CrowdReport, FlashDeal, …)
-  hooks/             # custom hooks (e.g. useCarts, useUserPoints)
-  data/              # seed data for carts
-  App.tsx
-  main.tsx
-  index.css
+    repository.ts    # KafeRepository — the ONLY data boundary the app talks to (async)
+    localRepository.ts  # today's implementation, wraps cartService.ts (localStorage)
+    index.ts         # exports `repo` — switch implementations here
+    cartService.ts   # localStorage persistence + pure helpers
+  utils/             # pure logic (recommendations, clusters, search, forecast, share, …) + *.test.ts
+  data/              # seed carts, labels, regions, rewards
+  types/
+  App.tsx            # composes hooks + phone/desktop layouts only
+public/sw.js         # service worker (offline shell + tile cache), production builds only
 ```
 
-- **Modular components.** Keep components small and single-purpose; no giant `App.tsx`.
-- **`src/services/cartService.ts`** owns all data access. Components never touch `localStorage` directly.
-  - Persists **crowd reports**, **user points**, and **flash deals** to `localStorage` so they survive a page refresh.
-  - Use namespaced, versioned keys (e.g. `kafe-panuy:v1:reports`).
-  - Wrap every `localStorage` read/write in `try/catch` and fall back to seed data on missing or corrupt JSON.
-  - Expose typed functions (e.g. `getCarts()`, `reportCrowd()`, `getPoints()`, `addPoints()`, `getFlashDeals()`, `getAlternatives()`), not raw storage.
-- **Smart alternatives**: recommendation logic (distance + current crowd level + active deals) lives in the service layer, not in UI components.
+- **Modular components.** Keep components small and single-purpose; keep `App.tsx` as composition only — new logic goes in a hook.
+- **Data goes through `repo`** (`src/services/index.ts`). Screens and hooks never touch `localStorage` and never import `cartService` write functions directly. A future backend (e.g. Supabase) = a new `KafeRepository` implementation + switching `repo`; no UI changes.
+  - `cartService.ts`: namespaced, versioned keys (e.g. `kafe-panuy:v1:reports`); wrap every `localStorage` read/write in `try/catch` and fall back to seed data.
+  - Per-browser preferences (theme, welcome-seen) use their own keys and are not app data.
+- **Layouts:** phones (`< md`) get the app shell — full-screen map, floating search, bottom tabs (`BottomTabs`), sheets; desktop gets `Navbar` + list column + map. The map stays mounted across phone tabs; map moves while it's hidden are deferred until it's visible (see `MapController`).
+- **Smart alternatives**: recommendation logic lives in `src/utils/recommendations.ts`, not in UI components.
 - Shared types live in `src/types/`; no `any`.
 
 ### Cart data sources
@@ -131,6 +134,7 @@ src/
 
 ## 6. Verification
 
-- **After completing every task, run `npm run build`** and confirm it finishes with **zero TypeScript or CSS bundling errors**.
+- **After completing every task, run `npm run build` and `npm test`** and confirm zero TypeScript/CSS errors and all tests passing. Add or update tests in `src/**/*.test.ts` when you change logic in `utils/` or `services/`.
+- The built-in Claude browser can't run service workers, and it pauses animations when the app window is hidden — check offline mode in real Chrome (`npm run build && npx vite preview`).
 - If the build fails, fix it before reporting the task as done. Never claim success without a passing build.
 - Don't silence errors with `// @ts-ignore`, `any`, or by loosening `tsconfig` — fix the root cause.

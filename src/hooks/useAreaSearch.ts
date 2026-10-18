@@ -13,6 +13,10 @@ export function useAreaSearch(
 
   const searchArea = useCallback(
     async (bounds: MapBounds) => {
+      if (!navigator.onLine) {
+        notify({ emoji: '📡', title: 'אין חיבור לאינטרנט', subtitle: 'חיפוש בתי קפה חדשים יעבוד כשהחיבור יחזור' })
+        return
+      }
       setSearching(true)
       try {
         const found = await fetchCafesInBounds(bounds)

@@ -13,15 +13,41 @@ export default function Modal({ title, onClose, children, footer }: ModalProps) 
   const titleId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
 
+  // Keep the latest onClose without re-running the setup below (callers often pass inline
+  // functions; re-running would steal focus back to the panel on every render).
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null
     panelRef.current?.focus()
 
-    // Capture phase + stopPropagation so Esc closes only the modal, not the drawer behind it
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return
-      e.stopPropagation()
-      onClose()
+      if (e.key === 'Escape') {
+        // Capture phase + stopPropagation so Esc closes only the modal, not the drawer behind it
+        e.stopPropagation()
+        onCloseRef.current()
+        return
+      }
+      if (e.key !== 'Tab' || !panelRef.current) return
+      // Focus trap: Tab / Shift+Tab cycle inside the dialog
+      const focusable = panelRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const active = document.activeElement
+      if (e.shiftKey && (active === first || active === panelRef.current)) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault()
+        first.focus()
+      } else if (!panelRef.current.contains(active)) {
+        e.preventDefault()
+        first.focus()
+      }
     }
     window.addEventListener('keydown', onKey, true)
     const { overflow } = document.body.style
@@ -32,7 +58,7 @@ export default function Modal({ title, onClose, children, footer }: ModalProps) 
       document.body.style.overflow = overflow
       previouslyFocused?.focus?.({ preventScroll: true })
     }
-  }, [onClose])
+  }, [])
 
   return (
     <div className="fixed inset-0 z-[3000] flex items-end justify-center md:items-center md:p-6">

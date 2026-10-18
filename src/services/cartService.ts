@@ -1,5 +1,5 @@
 import { initialCarts } from '../data/initialCarts'
-import { REPORT_POINTS } from '../data/rewards'
+import { REPORT_BASE_POINTS, REPORT_GPS_BONUS } from '../data/rewards'
 import { distanceKm } from './geo'
 import type { CoffeeCart, CrowdStatus, FieldReport, FlashDeal, Redemption, ReportInput, Reward } from '../types/cart'
 
@@ -127,6 +127,7 @@ export function ownerUpdateStatus(cartId: string, status: CrowdStatus, waitMinut
     lastUpdated: new Date().toISOString(),
     dataSource: 'live',
     ownerVerified: true,
+    verifiedGps: false,
   }))
 }
 
@@ -259,7 +260,9 @@ export interface ReportResult {
 export function submitReport(input: ReportInput): ReportResult {
   const now = new Date().toISOString()
   const note = input.note?.trim() || undefined
-  const report: FieldReport = { ...input, note, id: makeId(), pointsEarned: REPORT_POINTS, createdAt: now }
+  const verifiedGps = Boolean(input.verifiedGps)
+  const pointsEarned = verifiedGps ? REPORT_BASE_POINTS + REPORT_GPS_BONUS : REPORT_BASE_POINTS
+  const report: FieldReport = { ...input, note, id: makeId(), pointsEarned, verifiedGps, createdAt: now }
 
   const carts = getCarts().map((c) =>
     c.id === input.cartId
@@ -272,12 +275,13 @@ export function submitReport(input: ReportInput): ReportResult {
           fieldTags: input.fieldTags.length > 0 ? input.fieldTags : c.fieldTags,
           latestTip: note ?? c.latestTip,
           ownerVerified: false,
+          verifiedGps,
         }
       : c,
   )
   saveCarts(carts)
   write(KEYS.reports, [report, ...getReports()].slice(0, MAX_STORED))
-  const points = addPoints(REPORT_POINTS)
+  const points = addPoints(pointsEarned)
 
   return { carts, report, points, lifetimePoints: getLifetimePoints() }
 }

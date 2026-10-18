@@ -7,7 +7,12 @@ export function useMediaQuery(query: string) {
     const onChange = () => setMatches(mq.matches)
     onChange()
     mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
+    // Some browsers/emulators skip the media-query event on resize — check on resize too
+    window.addEventListener('resize', onChange)
+    return () => {
+      mq.removeEventListener('change', onChange)
+      window.removeEventListener('resize', onChange)
+    }
   }, [query])
   return matches
 }

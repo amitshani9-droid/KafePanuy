@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CoffeeCart } from '../types/cart'
 import type { AltRoute } from '../components/MapView'
 import type { SmartAlternative } from '../utils/recommendations'
@@ -20,16 +20,34 @@ export function useSelection(carts: CoffeeCart[], loading: boolean) {
   }, [])
 
   // A shared link (?cart=…) opens straight to that cart once data has loaded
+  const initialHandledRef = useRef(false)
   useEffect(() => {
-    if (loading) return
+    if (loading || initialHandledRef.current) return
     const id = cartIdFromUrl()
-    if (id && carts.some((c) => c.id === id)) select(id)
-    // run once after the first load only
-  }, [loading])
+    if (id && carts.some((c) => c.id === id)) {
+      select(id)
+      initialHandledRef.current = true
+    }
+  }, [loading, carts, select])
 
+  // Sync ?cart= in the URL seamlessly on selection / deselection
   useEffect(() => {
     if (!loading) syncCartInUrl(drawerOpen ? selectedId : null)
   }, [drawerOpen, selectedId, loading])
+
+  // Handle browser back/forward navigation
+  useEffect(() => {
+    const onPopState = () => {
+      const id = cartIdFromUrl()
+      if (id && carts.some((c) => c.id === id)) {
+        select(id)
+      } else {
+        setDrawerOpen(false)
+      }
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [carts, select])
 
   const goToAlternative = useCallback((from: CoffeeCart, alt: SmartAlternative) => {
     setRoute({ fromId: from.id, from: from.coordinates, to: alt.cart.coordinates })

@@ -1,6 +1,9 @@
 import type { LatLng } from '../types/cart'
 import { getDistanceKm } from '../utils/recommendations'
 
+/** Maximum distance from a cart (in km) to qualify for a GPS-verified field report (350 meters) */
+export const GPS_VERIFICATION_RADIUS_KM = 0.35
+
 export function distanceKm(a: LatLng, b: LatLng): number {
   return getDistanceKm(a.lat, a.lng, b.lat, b.lng)
 }

@@ -4,6 +4,7 @@ import { repo, type AppSnapshot } from '../services'
 import { RATING_POINTS, withMyRating } from '../services/cartService'
 import { REPORT_POINTS, rankFor } from '../data/rewards'
 import { ensureNotificationPermission, showSystemNotification } from '../utils/notify'
+import { cartShareUrl } from '../utils/share'
 import type { Notify } from './useToast'
 
 const EMPTY: AppSnapshot = { carts: [], points: 0, lifetimePoints: 0, reports: [], myRatings: {}, watches: [] }
@@ -46,7 +47,7 @@ export function useKafeStore(notify: Notify) {
         const before = prev.get(cart.id)
         if (data.watches.includes(cart.id) && before && before !== 'calm' && cart.status === 'calm') {
           const body = `${cart.area} · בערך ${cart.waitMinutes} דק׳ המתנה — זה הזמן לקפוץ ☕`
-          void showSystemNotification(`${cart.name} התפנתה! 🟢`, body)
+          void showSystemNotification(`${cart.name} התפנתה! 🟢`, body, cartShareUrl(cart.id))
           notify({ emoji: '🔔', title: `${cart.name} התפנתה!`, subtitle: body, celebrate: true })
         }
       }
@@ -61,11 +62,16 @@ export function useKafeStore(notify: Notify) {
       setData((d) => ({ ...d, carts: r.carts, points: r.points, lifetimePoints: r.lifetimePoints, reports: [r.report, ...d.reports] }))
       const newRank = rankFor(r.lifetimePoints)
       const rankedUp = newRank.title !== prevRank.title
+      const earned = r.report.pointsEarned ?? REPORT_POINTS
       notify({
-        emoji: rankedUp ? newRank.emoji : '🎉',
-        title: rankedUp ? `עלית דרגה: ${newRank.title}!` : `תודה! קיבלת +${REPORT_POINTS} נקודות קפה`,
+        emoji: rankedUp ? newRank.emoji : r.report.verifiedGps ? '📍' : '🎉',
+        title: rankedUp
+          ? `עלית דרגה: ${newRank.title}!`
+          : r.report.verifiedGps
+            ? `דיווח מאומת מהשטח! קיבלת +${earned} נקודות קפה`
+            : `תודה! קיבלת +${earned} נקודות קפה`,
         subtitle: rankedUp
-          ? `+${REPORT_POINTS} נק׳ על הדיווח · יש לך ${r.points} נק׳`
+          ? `+${earned} נק׳ על הדיווח · יש לך ${r.points} נק׳`
           : `הדיווח עודכן במפה · יש לך ${r.points} נק׳`,
         celebrate: true,
       })

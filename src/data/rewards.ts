@@ -1,6 +1,8 @@
 import type { CrowdStatus, Reward } from '../types/cart'
 
-export const REPORT_POINTS = 15
+export const REPORT_BASE_POINTS = 40
+export const REPORT_GPS_BONUS = 20
+export const REPORT_POINTS = REPORT_BASE_POINTS
 
 export const REPORT_FIELD_TAGS = [
   'מאפים חמים מהתנור 🥐',

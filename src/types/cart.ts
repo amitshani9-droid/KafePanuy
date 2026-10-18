@@ -45,6 +45,8 @@ export interface CoffeeCart {
   latestTip?: string
   /** True when the current status was set by the cart owner (cleared by the next field report) */
   ownerVerified?: boolean
+  /** True when the latest live report was submitted within 350m of the cart */
+  verifiedGps?: boolean
   flashDeal?: FlashDeal
 }
 
@@ -63,9 +65,10 @@ export interface FieldReport {
   note?: string
   pointsEarned: number
   createdAt: string
+  verifiedGps?: boolean
 }
 
-export type ReportInput = Pick<FieldReport, 'cartId' | 'status' | 'waitMinutes' | 'fieldTags' | 'note'>
+export type ReportInput = Pick<FieldReport, 'cartId' | 'status' | 'waitMinutes' | 'fieldTags' | 'note' | 'verifiedGps'>
 
 export interface Reward {
   id: string

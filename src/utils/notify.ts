@@ -9,14 +9,23 @@ export async function ensureNotificationPermission(): Promise<NotificationPermis
   }
 }
 
-/** Shows a system notification when allowed; returns false if it couldn't. */
-export function showSystemNotification(title: string, body: string): boolean {
+/**
+ * Shows a system notification when allowed. Prefers the service worker (required on
+ * Android, and tapping it opens `url`); falls back to a page notification.
+ * Returns false if nothing could be shown.
+ */
+export async function showSystemNotification(title: string, body: string, url = '/'): Promise<boolean> {
   if (!('Notification' in window) || Notification.permission !== 'granted') return false
+  const options: NotificationOptions = { body, icon: '/icon-192.png', badge: '/icon-192.png', lang: 'he', dir: 'rtl', data: { url } }
   try {
-    new Notification(title, { body, icon: '/icon-192.png', lang: 'he', dir: 'rtl' })
+    const registration = 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : undefined
+    if (registration) {
+      await registration.showNotification(title, options)
+      return true
+    }
+    new Notification(title, options)
     return true
   } catch {
-    // e.g. Android Chrome only allows notifications from a service worker
     return false
   }
 }

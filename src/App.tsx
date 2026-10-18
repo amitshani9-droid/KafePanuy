@@ -27,6 +27,8 @@ import OwnerDashboardModal from './components/OwnerDashboardModal'
 import AddCartModal from './components/AddCartModal'
 import ResetDemoButton from './components/ResetDemoButton'
 import Toast from './components/Toast'
+import OfflineBanner from './components/OfflineBanner'
+import WelcomeSheet, { hasSeenWelcome } from './components/WelcomeSheet'
 
 export default function App() {
   const { toast, notify, clear: clearToast } = useToast()
@@ -44,6 +46,7 @@ export default function App() {
   const [reportCartId, setReportCartId] = useState<string | null>(null)
   const [rewardsOpen, setRewardsOpen] = useState(false)
   const [ownerOpen, setOwnerOpen] = useState(false)
+  const [welcomeOpen, setWelcomeOpen] = useState(() => !hasSeenWelcome())
   /** Carts unlocked with their owner PIN for this visit only */
   const [unlockedIds, setUnlockedIds] = useState<string[]>([])
 
@@ -288,7 +291,13 @@ export default function App() {
         />
       )}
       {reportCart && (
-        <ReportModal key={reportCart.id} cart={reportCart} onClose={() => setReportCartId(null)} onSubmit={handleReport} />
+        <ReportModal
+          key={reportCart.id}
+          cart={reportCart}
+          userLocation={userLocation}
+          onClose={() => setReportCartId(null)}
+          onSubmit={handleReport}
+        />
       )}
       {rewardsOpen && (
         <RewardsModal
@@ -332,6 +341,10 @@ export default function App() {
           onSubmit={addFlow.submit}
         />
       )}
+      {welcomeOpen && !store.loading && (
+        <WelcomeSheet onDone={() => setWelcomeOpen(false)} onUseLocation={() => void changeSort('nearest')} />
+      )}
+      <OfflineBanner />
       <Toast toast={toast} onDone={clearToast} />
     </div>
   )

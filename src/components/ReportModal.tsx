@@ -1,18 +1,21 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Check, Send } from 'lucide-react'
-import type { CoffeeCart, CrowdStatus, ReportInput } from '../types/cart'
+import type { CoffeeCart, CrowdStatus, LatLng, ReportInput } from '../types/cart'
 import {
   MAX_REPORT_WAIT,
+  REPORT_BASE_POINTS,
   REPORT_FIELD_TAGS,
-  REPORT_POINTS,
+  REPORT_GPS_BONUS,
   REPORT_STATUS_OPTIONS,
   statusForWait,
 } from '../data/rewards'
 import { STATUS_META } from '../data/filters'
+import { distanceKm, GPS_VERIFICATION_RADIUS_KM, requestUserLocation } from '../services/geo'
 import Modal from './Modal'
 
 interface ReportModalProps {
   cart: CoffeeCart
+  userLocation?: LatLng | null
   onClose: () => void
   onSubmit: (input: ReportInput) => void
 }
@@ -30,11 +33,37 @@ function StepTitle({ n, children }: { n: number; children: string }) {
   )
 }
 
-export default function ReportModal({ cart, onClose, onSubmit }: ReportModalProps) {
+export default function ReportModal({ cart, userLocation, onClose, onSubmit }: ReportModalProps) {
+  const [userCoords, setUserCoords] = useState<LatLng | null>(userLocation ?? null)
   const [status, setStatus] = useState<CrowdStatus | null>(null)
   const [wait, setWait] = useState(cart.waitMinutes)
   const [tags, setTags] = useState<string[]>([])
   const [note, setNote] = useState('')
+
+  useEffect(() => {
+    if (userLocation) {
+      setUserCoords(userLocation)
+      return
+    }
+    let alive = true
+    requestUserLocation()
+      .then((loc) => {
+        if (alive) setUserCoords(loc)
+      })
+      .catch(() => {
+        // Geolocation denied or unavailable
+      })
+    return () => {
+      alive = false
+    }
+  }, [userLocation])
+
+  const isGpsVerified = useMemo(() => {
+    if (!userCoords) return false
+    return distanceKm(userCoords, cart.coordinates) <= GPS_VERIFICATION_RADIUS_KM
+  }, [userCoords, cart.coordinates])
+
+  const pointsToAward = isGpsVerified ? REPORT_BASE_POINTS + REPORT_GPS_BONUS : REPORT_BASE_POINTS
 
   function pickStatus(next: CrowdStatus) {
     setStatus(next)
@@ -55,7 +84,14 @@ export default function ReportModal({ cart, onClose, onSubmit }: ReportModalProp
 
   function submit() {
     if (!status) return
-    onSubmit({ cartId: cart.id, status, waitMinutes: wait, fieldTags: tags, note })
+    onSubmit({
+      cartId: cart.id,
+      status,
+      waitMinutes: wait,
+      fieldTags: tags,
+      note,
+      verifiedGps: isGpsVerified,
+    })
   }
 
   const effectiveStatus = status ?? statusForWait(wait)
@@ -79,11 +115,17 @@ export default function ReportModal({ cart, onClose, onSubmit }: ReportModalProp
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-espresso py-3.5 font-display text-base font-bold text-white shadow-md transition hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
         >
           <Send size={18} />
-          {status ? `שלח דיווח (+${REPORT_POINTS} נק׳)` : 'בחרו קודם כמה עמוס שם'}
+          {status ? `שלח דיווח (+${pointsToAward} נק׳)` : 'בחרו קודם כמה עמוס שם'}
         </button>
       }
     >
       <div className="space-y-6 pt-2">
+        {/* GPS Proximity Badge */}
+        {isGpsVerified && (
+          <div className="flex items-center justify-center gap-1.5 rounded-full bg-calm/15 px-3.5 py-2 text-xs font-bold text-calm-ink ring-1 ring-calm/30">
+            <span>📍 זוהית בעגלה! דיווח מאומת מהשטח (+20 נק׳ בונוס)</span>
+          </div>
+        )}
         {/* Step 1 — status */}
         <section>
           <StepTitle n={1}>כמה עמוס עכשיו?</StepTitle>

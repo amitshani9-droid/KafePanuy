@@ -99,7 +99,14 @@ const CartCard = forwardRef<HTMLElement, CartCardProps>(function CartCard(
                 ? '🙋 נוסף ע״י משתמשים'
                 : ''}
         </span>
-        <span className="shrink-0">{updatedLabel(cart.lastUpdated)}</span>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {cart.dataSource === 'live' && cart.verifiedGps && (
+            <span className="rounded-full bg-calm/15 px-2 py-0.5 font-bold text-calm-ink">
+              📍 אומת מהשטח
+            </span>
+          )}
+          <span>{updatedLabel(cart.lastUpdated)}</span>
+        </div>
       </div>
       </button>
       {onReport && (
