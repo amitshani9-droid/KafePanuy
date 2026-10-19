@@ -1,0 +1,61 @@
+name: Update places from OpenStreetMap
+
+# Builds public/data/places.json (every café and coffee cart in Israel) from the
+# free Geofabrik extract, so the app never depends on a slow live map server.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 2 * * 1' # Mondays 02:17 UTC
+  push:
+    branches: [main]
+    paths:
+      - scripts/build-places.mjs
+      - .github/workflows/places.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: places
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install osmium
+        run: sudo apt-get update -q && sudo apt-get install -y -q osmium-tool
+
+      - name: Download Israel extract (Geofabrik)
+        run: curl -fsSL --retry 3 -o il.osm.pbf https://download.geofabrik.de/asia/israel-and-palestine-latest.osm.pbf
+
+      - name: Filter coffee places
+        run: |
+          osmium tags-filter il.osm.pbf \
+            nwr/amenity=cafe nwr/shop=coffee nwr/street_vendor=yes nwr/amenity=kiosk,fast_food \
+            -o filtered.osm.pbf --overwrite
+          osmium export filtered.osm.pbf -f geojsonseq -a type,id \
+            --geometry-types=point,polygon -o places.geojsonseq --overwrite
+
+      - name: Build places.json
+        run: node scripts/build-places.mjs places.geojsonseq public/data/places.json
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/places.json
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "chore(data): update places from OpenStreetMap"
+            git pull --rebase origin main
+            git push
+          fi

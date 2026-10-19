@@ -10,7 +10,7 @@ import {
   slotScore,
 } from './busyness'
 import { describeOpenState, getSchedule, openHoursOfDay, openState, parseOpeningHours } from './hours'
-import { classify, parseElements } from './overpass'
+import { classify, parseElements, parseStaticRows } from './overpass'
 import { profilesFromReports } from './backend'
 import { formatDistance } from './geo'
 
@@ -164,6 +164,19 @@ describe('overpass', () => {
     ])
     expect(places.map((p) => p.key)).toEqual(['osm:node/1', 'osm:way/2'])
     expect(places[0].name).toBe('ארומה')
+  })
+})
+
+describe('static dataset', () => {
+  it('turns compact rows into places', () => {
+    const places = parseStaticRows([
+      ['n12', 32.1, 34.8, { amenity: 'cafe', name: 'Cafe', 'name:he': 'קפה', opening_hours: 'Mo-Fr 08:00-18:00' }],
+      ['w7', 32.2, 34.9, { street_vendor: 'yes', cuisine: 'coffee' }],
+      ['x1', 32.2, 34.9, { amenity: 'cafe', name: 'bad id' }],
+    ])
+    expect(places.map((p) => p.key)).toEqual(['osm:node/12', 'osm:way/7'])
+    expect(places[0]).toMatchObject({ name: 'קפה', kind: 'cafe', openingHours: 'Mo-Fr 08:00-18:00' })
+    expect(places[1]).toMatchObject({ name: 'עגלת קפה', kind: 'cart' })
   })
 })
 

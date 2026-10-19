@@ -133,7 +133,7 @@ export default function App() {
   const report = useCallback(
     async (key: string, level: Level) => {
       await crowd.report(key, level)
-      setToast(isShared ? 'הדיווח נשלח — תודה!' : 'הדיווח נשמר')
+      setToast(isShared() ? 'הדיווח נשלח — תודה!' : 'הדיווח נשמר')
     },
     [crowd],
   )
@@ -256,7 +256,7 @@ export default function App() {
             <div className="mt-1">
               <PlaceList items={ranked} onSelect={select} limit={60} />
             </div>
-            {!isShared && ranked.length > 0 && (
+            {!isShared() && ranked.length > 0 && (
               <p className="px-4 pt-4 text-center text-xs text-muted">
                 מצב מקומי: דיווחים נשמרים רק במכשיר הזה עד שיחובר שרת.
               </p>

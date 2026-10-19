@@ -6,7 +6,7 @@
 
 | מה | מאיפה |
 |---|---|
-| בתי קפה ועגלות | OpenStreetMap (Overpass API, חינם), ועגלות שמשתמשים מוסיפים |
+| בתי קפה ועגלות | OpenStreetMap — קובץ `public/data/places.json` שמתעדכן כל שבוע אוטומטית (GitHub Action), ועגלות שמשתמשים מוסיפים |
 | שעות פתיחה | OpenStreetMap; כשאין, שעות משוערות שמסומנות ככאלה |
 | **עומס עכשיו** | דיווחי משתמשים מ-45 הדקות האחרונות ("אין תור / קצת תור / תור ארוך") |
 | **מתי פנוי** | דיווחים מהעבר לפי יום ושעה למקום הזה; עד שיש מספיק — הערכה לפי דפוסי יום ושעה בישראל |
@@ -39,7 +39,9 @@ VITE_SUPABASE_ANON_KEY=...
 
 ## פריסה
 
-Netlify: `npm run build`, תיקיית `dist`. הקובץ `public/_redirects` מעביר את בקשות Overpass דרך הדומיין שלנו (בלי בעיות CORS).
+Netlify: `npm run build`, תיקיית `dist`.
+
+רשימת המקומות נבנית ב-GitHub Actions (`Update places from OpenStreetMap`) — כל יום שני, או ידנית מלשונית Actions.
 
 ## בדיקות
 

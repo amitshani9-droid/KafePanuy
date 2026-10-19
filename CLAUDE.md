@@ -82,7 +82,7 @@ Never remove these rules, and never let the map container collapse to zero heigh
 ```
 src/
   lib/               # pure logic + data access, tested in lib.test.ts
-    overpass.ts      # cafés/carts from OSM (Overpass), 24h localStorage cache, mirror fallback
+    overpass.ts      # places: bundled dataset (public/data/places.json) first; live Overpass only as fallback
     hours.ts         # small opening_hours parser (common OSM subset) + typical-hours fallback
     busyness.ts      # status: live reports > learned profile > estimate; hourly forecast
     backend.ts       # reports + user-added places: Supabase RPC, or localStorage when not configured
@@ -92,7 +92,9 @@ src/
   components/        # MapView, Sheet, TopBar, PlaceList, PlaceDetail, HourChart, AddPlace, StatusTag, Toast
   App.tsx            # composition + UI state only
 supabase/schema.sql  # tables locked (RLS, no policies); all access via SECURITY DEFINER functions
-public/_redirects    # Netlify proxy for Overpass mirrors + SPA fallback
+public/data/places.json  # all cafés/coffee carts in Israel (generated — don't edit by hand)
+scripts/build-places.mjs # builds it from an osmium geojsonseq export
+public/_redirects    # SPA fallback (+ legacy Overpass proxy, last-resort fallback)
 public/sw.js         # offline shell + small tile cache (production only)
 ```
 
@@ -103,7 +105,8 @@ public/sw.js         # offline shell + small tile cache (production only)
 
 ### Data
 - Place keys: `osm:<type>/<id>` or `user:<uuid>`. The SQL validates this format.
-- Overpass is a shared free service: keep the search-size cap, the cache, and the mirror fallback. Keep the OSM attribution.
+- **Places come from `public/data/places.json`**, built weekly by `.github/workflows/places.yml` (Geofabrik Israel extract → osmium → `scripts/build-places.mjs`). Don't make the app depend on a live map server: as of 2026-10-19 overpass-api.de rejects the Netlify proxy (406) and the other mirrors time out behind it. Live Overpass stays only as a browser-side fallback when the dataset is missing. Keep the OSM attribution.
+- If Supabase is configured but its functions are missing (PGRST202), `backend.ts` switches to local mode for the session instead of failing.
 - Supabase writes are rate-limited per anonymous device id in SQL. Never open direct table access or add permissive RLS policies.
 
 ## 6. Verification

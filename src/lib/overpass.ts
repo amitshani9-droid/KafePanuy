@@ -2,10 +2,14 @@ import type { Place, PlaceKind } from '../types'
 import { boundsContain, boundsDiagonalKm, type Bounds } from './geo'
 import { readJson, writeJson } from './storage'
 
-/** Production: same-origin Netlify proxies (public/_redirects), so there are no CORS issues. */
-const PROXY_ENDPOINTS = ['/api/overpass-kumi/interpreter', '/api/overpass/interpreter', '/api/overpass-coffee/interpreter']
-/** Local dev has no proxy; these mirrors send CORS headers. */
-const DIRECT_ENDPOINTS = ['https://overpass.kumi.systems/api/interpreter', 'https://overpass-api.de/api/interpreter']
+/**
+ * Fallback only (see loadStaticPlaces below). Browsers call the public mirrors
+ * directly — they send CORS headers on success. The Netlify proxy is a last
+ * resort: overpass-api.de rejects it (406) and the other mirrors time out
+ * behind Netlify's ~26 s proxy limit (checked 2026-10-19).
+ */
+const DIRECT_ENDPOINTS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']
+const PROXY_ENDPOINTS = ['/api/overpass-kumi/interpreter']
 
 /** Overpass is a shared free service — keep each search roughly city-sized */
 export const MAX_SEARCH_KM = 40
@@ -129,7 +133,7 @@ export async function fetchPlaces(view: Bounds): Promise<Place[]> {
 
   const bounds = boundsDiagonalKm(padBounds(view)) <= MAX_SEARCH_KM ? padBounds(view) : view
   const query = buildQuery(bounds)
-  const endpoints = import.meta.env.PROD ? PROXY_ENDPOINTS : DIRECT_ENDPOINTS
+  const endpoints = import.meta.env.PROD ? [...DIRECT_ENDPOINTS, ...PROXY_ENDPOINTS] : DIRECT_ENDPOINTS
   let lastError: OverpassError = new OverpassError('network')
   for (const endpoint of endpoints) {
     try {
@@ -142,4 +146,40 @@ export async function fetchPlaces(view: Bounds): Promise<Place[]> {
     }
   }
   throw lastError
+}
+
+// ---------------------------------------------------------------------------
+// Static dataset (public/data/places.json), built weekly from the Geofabrik
+// extract by .github/workflows/places.yml. This is the primary source; the
+// live Overpass search above is only a fallback when the file is missing.
+// ---------------------------------------------------------------------------
+
+type StaticRow = [string, number, number, Record<string, string>]
+const TYPE_BY_CODE: Record<string, OverpassElement['type']> = { n: 'node', w: 'way', r: 'relation' }
+
+export function parseStaticRows(rows: StaticRow[]): Place[] {
+  const elements: OverpassElement[] = []
+  for (const [id, lat, lng, tags] of rows) {
+    const type = TYPE_BY_CODE[id[0]]
+    const num = Number(id.slice(1))
+    if (!type || !Number.isFinite(num)) continue
+    elements.push({ type, id: num, lat, lon: lng, tags })
+  }
+  return parseElements(elements)
+}
+
+let staticPromise: Promise<Place[] | null> | null = null
+
+/** All coffee places in Israel from the bundled dataset; null if it isn't available */
+export function loadStaticPlaces(): Promise<Place[] | null> {
+  if (!staticPromise) {
+    staticPromise = fetch('/data/places.json', { cache: 'no-cache' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { places?: StaticRow[] } | null) => {
+        const list = d?.places ? parseStaticRows(d.places) : []
+        return list.length ? list : null
+      })
+      .catch(() => null)
+  }
+  return staticPromise
 }
