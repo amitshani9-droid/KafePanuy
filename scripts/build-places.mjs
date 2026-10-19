@@ -8,7 +8,8 @@
  * Output: { generated, attribution, places: [[ "n123", lat, lng, {tags} ], ...] }
  * The app turns each row into an Overpass-style element and runs the same parser.
  */
-import { readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname } from 'node:path'
 
 const KEEP_TAGS = [
   'name',
@@ -97,6 +98,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     attribution: '© OpenStreetMap contributors (ODbL)',
     places,
   }
+  mkdirSync(dirname(output), { recursive: true })
   writeFileSync(output, JSON.stringify(out) + '\n')
   console.log(`Wrote ${places.length} places to ${output}`)
 }
