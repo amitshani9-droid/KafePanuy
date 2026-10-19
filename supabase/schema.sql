@@ -1,119 +1,177 @@
--- ==============================================================================
--- קפה פנוי (Kafe Panuy) — Supabase PostgreSQL Schema
--- ==============================================================================
--- Run this script in the Supabase SQL Editor to set up all tables and RLS policies.
--- ==============================================================================
+-- קפה פנוי — Supabase schema (free tier is enough).
+-- Run once in the Supabase SQL editor. Safe to re-run.
+--
+-- Security model: the browser only has the public anon/publishable key, so the
+-- tables are fully locked (RLS on, no policies). All reads and writes go through
+-- the SECURITY DEFINER functions below, which validate input and rate-limit by an
+-- anonymous device id. Nobody can edit or delete someone else's data.
 
--- 1. CARTS TABLE
-create table if not exists public.carts (
-  id text primary key,
-  name text not null,
-  aliases text[] default '{}',
-  area text not null,
-  description text default '',
-  lat double precision not null,
-  lng double precision not null,
-  region text not null check (region in ('sharon', 'north', 'center', 'south')),
-  source text not null check (source in ('curated', 'osm', 'user')) default 'curated',
-  opening_hours text not null default '',
-  rating numeric(3,1) not null default 0,
-  review_count integer not null default 0,
-  status text not null check (status in ('calm', 'moderate', 'busy')) default 'calm',
-  wait_minutes integer not null default 0,
-  specialties text[] default '{}',
-  tags text[] default '{}',
-  last_updated timestamptz not null default now(),
-  data_source text not null check (data_source in ('live', 'estimate')) default 'estimate',
-  field_tags text[] default '{}',
-  latest_tip text,
-  owner_verified boolean default false,
-  verified_gps boolean default false,
-  owner_pin_hash text,
-  created_at timestamptz not null default now()
+create extension if not exists pgcrypto;
+
+-- ---------------------------------------------------------------------------
+-- Tables
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.reports (
+  id          bigint generated always as identity primary key,
+  place_key   text        not null check (char_length(place_key) between 5 and 100),
+  level       text        not null check (level in ('calm', 'moderate', 'busy')),
+  device      text        not null check (char_length(device) between 8 and 64),
+  created_at  timestamptz not null default now()
 );
+create index if not exists reports_place_time on public.reports (place_key, created_at desc);
+create index if not exists reports_device_time on public.reports (device, created_at desc);
 
--- Indexes for carts
-create index if not exists idx_carts_region on public.carts(region);
-create index if not exists idx_carts_status on public.carts(status);
-
--- 2. CROWD REPORTS TABLE
-create table if not exists public.crowd_reports (
-  id text primary key,
-  cart_id text not null references public.carts(id) on delete cascade,
-  status text not null check (status in ('calm', 'moderate', 'busy')),
-  wait_minutes integer not null,
-  field_tags text[] default '{}',
-  note text,
-  points_earned integer not null default 40,
-  verified_gps boolean not null default false,
-  created_at timestamptz not null default now()
+create table if not exists public.user_places (
+  id            uuid        primary key default gen_random_uuid(),
+  name          text        not null check (char_length(btrim(name)) between 2 and 60),
+  kind          text        not null check (kind in ('cafe', 'cart')),
+  lat           double precision not null check (lat between 29.3 and 33.5),
+  lng           double precision not null check (lng between 34.2 and 35.95),
+  opening_hours text        check (opening_hours is null or char_length(opening_hours) <= 200),
+  device        text        not null,
+  created_at    timestamptz not null default now()
 );
+create index if not exists user_places_geo on public.user_places (lat, lng);
 
--- Indexes for crowd reports
-create index if not exists idx_crowd_reports_cart_id on public.crowd_reports(cart_id);
-create index if not exists idx_crowd_reports_created_at on public.crowd_reports(created_at desc);
+alter table public.reports     enable row level security;
+alter table public.user_places enable row level security;
+-- No policies on purpose: direct table access is denied for anon/authenticated.
+revoke all on public.reports, public.user_places from anon, authenticated;
 
--- 3. FLASH DEALS TABLE
-create table if not exists public.flash_deals (
-  id uuid primary key default gen_random_uuid(),
-  cart_id text not null references public.carts(id) on delete cascade,
-  text text not null,
-  expires_at timestamptz not null,
-  created_at timestamptz not null default now()
-);
+-- The previous version used public.carts / crowd_reports / flash_deals with
+-- wide-open policies. This version doesn't touch them; drop them yourself once
+-- you no longer need that data.
 
--- Indexes for flash deals
-create index if not exists idx_flash_deals_cart_id on public.flash_deals(cart_id);
-create index if not exists idx_flash_deals_expires_at on public.flash_deals(expires_at);
+-- ---------------------------------------------------------------------------
+-- Writes
+-- ---------------------------------------------------------------------------
 
--- ==============================================================================
--- ROW LEVEL SECURITY (RLS) POLICIES
--- ==============================================================================
+-- Report how busy a place is. One report per device per place per 10 minutes —
+-- a second report inside that window corrects the first instead of adding to it.
+create or replace function public.submit_report(p_place_key text, p_level text, p_device text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_recent_id bigint;
+begin
+  if p_level not in ('calm', 'moderate', 'busy') then raise exception 'bad level'; end if;
+  if p_place_key !~ '^(osm:(node|way|relation)/[0-9]+|user:[0-9a-f-]{36})$' then raise exception 'bad place'; end if;
+  if char_length(coalesce(p_device, '')) not between 8 and 64 then raise exception 'bad device'; end if;
 
-alter table public.carts enable row level security;
-alter table public.crowd_reports enable row level security;
-alter table public.flash_deals enable row level security;
+  if (select count(*) from reports where device = p_device and created_at > now() - interval '1 hour') >= 20 then
+    raise exception 'rate limited';
+  end if;
 
--- CARTS POLICIES
--- Anyone can view all carts
-create policy "Allow public read on carts"
-  on public.carts for select
-  using (true);
+  select id into v_recent_id from reports
+   where device = p_device and place_key = p_place_key and created_at > now() - interval '10 minutes'
+   order by created_at desc limit 1;
 
--- Anyone can insert new carts (OSM / user added)
-create policy "Allow public insert on carts"
-  on public.carts for insert
-  with check (true);
+  if v_recent_id is not null then
+    update reports set level = p_level, created_at = now() where id = v_recent_id;
+  else
+    insert into reports (place_key, level, device) values (p_place_key, p_level, p_device);
+  end if;
+end;
+$$;
 
--- Anyone can update crowd status and field details when reporting
-create policy "Allow public crowd status updates on carts"
-  on public.carts for update
-  using (true)
-  with check (true);
+-- Add a coffee cart / café that isn't on the map yet. Max 5 per device per day,
+-- and not within 30 m of one that already exists.
+create or replace function public.add_place(
+  p_name text, p_kind text, p_lat double precision, p_lng double precision, p_device text,
+  p_opening_hours text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_id uuid;
+begin
+  if char_length(coalesce(p_device, '')) not between 8 and 64 then raise exception 'bad device'; end if;
+  if (select count(*) from user_places where device = p_device and created_at > now() - interval '1 day') >= 5 then
+    raise exception 'rate limited';
+  end if;
+  if exists (
+    select 1 from user_places
+     where abs(lat - p_lat) < 0.0003 and abs(lng - p_lng) < 0.0003
+  ) then
+    raise exception 'duplicate';
+  end if;
+  insert into user_places (name, kind, lat, lng, opening_hours, device)
+  values (btrim(p_name), p_kind, p_lat, p_lng, nullif(btrim(p_opening_hours), ''), p_device)
+  returning id into v_id;
+  return v_id;
+end;
+$$;
 
--- CROWD REPORTS POLICIES
--- Anyone can view recent reports
-create policy "Allow public read on crowd_reports"
-  on public.crowd_reports for select
-  using (true);
+-- ---------------------------------------------------------------------------
+-- Reads (no device ids are ever returned)
+-- ---------------------------------------------------------------------------
 
--- Anyone can submit a report
-create policy "Allow public insert on crowd_reports"
-  on public.crowd_reports for insert
-  with check (true);
+-- Reports from the last 45 minutes for the given places
+create or replace function public.get_live_reports(p_keys text[])
+returns table (place_key text, level text, created_at timestamptz)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select r.place_key, r.level, r.created_at
+    from reports r
+   where r.place_key = any (p_keys[1:600])
+     and r.created_at > now() - interval '45 minutes'
+   order by r.created_at desc
+   limit 3000;
+$$;
 
--- FLASH DEALS POLICIES
--- Anyone can view active flash deals
-create policy "Allow public read on flash_deals"
-  on public.flash_deals for select
-  using (true);
+-- Typical busyness learned from the last 120 days, per weekday (0 = Sunday) and
+-- hour in Israel time. score is 0–100 (calm 15, moderate 55, busy 90).
+create or replace function public.get_profiles(p_keys text[])
+returns table (place_key text, dow int, hour int, score real, n int)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select r.place_key,
+         extract(dow  from r.created_at at time zone 'Asia/Jerusalem')::int as dow,
+         extract(hour from r.created_at at time zone 'Asia/Jerusalem')::int as hour,
+         avg(case r.level when 'calm' then 15 when 'moderate' then 55 else 90 end)::real as score,
+         count(*)::int as n
+    from reports r
+   where r.place_key = any (p_keys[1:600])
+     and r.created_at > now() - interval '120 days'
+   group by 1, 2, 3;
+$$;
 
--- Anyone can start a flash deal (in demo mode)
-create policy "Allow public insert on flash_deals"
-  on public.flash_deals for insert
-  with check (true);
+create or replace function public.get_user_places(
+  p_south double precision, p_west double precision, p_north double precision, p_east double precision
+)
+returns table (id uuid, name text, kind text, lat double precision, lng double precision, opening_hours text)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select id, name, kind, lat, lng, opening_hours
+    from user_places
+   where lat between p_south and p_north and lng between p_west and p_east
+   limit 500;
+$$;
 
--- Anyone can delete/end flash deals
-create policy "Allow public delete on flash_deals"
-  on public.flash_deals for delete
-  using (true);
+revoke all on function public.submit_report(text, text, text) from public;
+revoke all on function public.add_place(text, text, double precision, double precision, text, text) from public;
+revoke all on function public.get_live_reports(text[]) from public;
+revoke all on function public.get_profiles(text[]) from public;
+revoke all on function public.get_user_places(double precision, double precision, double precision, double precision) from public;
+
+grant execute on function public.submit_report(text, text, text) to anon, authenticated;
+grant execute on function public.add_place(text, text, double precision, double precision, text, text) to anon, authenticated;
+grant execute on function public.get_live_reports(text[]) to anon, authenticated;
+grant execute on function public.get_profiles(text[]) to anon, authenticated;
+grant execute on function public.get_user_places(double precision, double precision, double precision, double precision) to anon, authenticated;

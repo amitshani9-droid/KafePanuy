@@ -1,6 +1,6 @@
 /* קפה פנוי service worker — offline app shell + safe tile cache.
    Bump VERSION to drop old caches and force immediate quota cleanup. */
-const VERSION = 'kp-v2'
+const VERSION = 'kp-v3'
 const SHELL_CACHE = `${VERSION}-shell`
 const ASSET_CACHE = `${VERSION}-assets`
 const TILE_CACHE = `${VERSION}-tiles`

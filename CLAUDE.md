@@ -1,8 +1,8 @@
 # CLAUDE.md — קפה פנוי (Kafe Panuy)
 
-> **קפה פנוי — הקפה שלך, בלי התור**
+> **קפה פנוי — איפה אין תור עכשיו**
 
-A real-time, Waze-style crowd tracking web app for coffee carts (עגלות קפה) in Israel. Users see how busy each cart is right now, report the crowd themselves, earn points, catch flash deals, and get smart recommendations for a calmer cart nearby.
+A map app that shows which cafés and coffee carts (עגלות קפה) in Israel are free right now, which are busy, and when each one is usually quiet. It must stay **free to run**: no paid APIs.
 
 The rules below are **strict**. Follow them on every task.
 
@@ -29,7 +29,7 @@ The rules below are **strict**. Follow them on every task.
 | Maps | **`react-leaflet`** + **`leaflet`** |
 | Map tiles | Free **OpenStreetMap** tiles, CSS-softened (CartoDB Positron preferred if it works keyless again) — **zero API keys** |
 
-- Do not add paid services, API keys, or `.env` secrets. Everything must run with `npm install && npm run dev`.
+- Do not add paid services or secret API keys. Everything must run with `npm install && npm run dev`. The only optional config is the free Supabase project (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — public by design).
 - Do not introduce other UI/icon/map libraries without asking first.
 - Tile layer: CartoDB Positron (`https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png`) currently returns an **"API KEY REQUIRED" placeholder** (checked 2026-10-17), so the app uses the **OpenStreetMap fallback**, desaturated via CSS on `.leaflet-tile-pane`:
   ```tsx
@@ -41,32 +41,13 @@ The rules below are **strict**. Follow them on every task.
   Switch back to Positron only if it works again without a key. Always keep the OSM attribution.
 - Import `leaflet/dist/leaflet.css` once (in `main.tsx`). Under Vite, set Leaflet's default marker icon URLs explicitly (or use custom `divIcon` markers) so markers don't render as broken images.
 
-## 3. Brand Identity
+## 3. Visual Design
 
-### Fonts (Google Fonts)
-- **`'Rubik'`** — headings, numbers, logo.
-- **`'Heebo'`** — body text, tags, buttons, general UI.
-- Load both in `index.html` via `<link>` with `display=swap` and Hebrew subset. Expose them in Tailwind as `font-display` (Rubik) and `font-body` (Heebo); `body` defaults to Heebo.
-
-### Palette
-Define these as Tailwind theme tokens and **always use the tokens** — never hardcode hex values in components.
-
-| Token | Hex | Use |
-|---|---|---|
-| `cream` | `#FAF7F2` | App background (warm oat/cream) |
-| `forest` | `#1B4332` | Primary — brand, headers, primary buttons |
-| `espresso` | `#D97706` | Accent — CTAs, points, flash deals |
-| `calm` | `#10B981` | Status: רגוע (calm) |
-| `moderate` | `#F59E0B` | Status: בינוני (moderate) |
-| `busy` | `#E11D48` | Status: עמוס (busy) |
-
-- Traffic-light statuses (`calm` / `moderate` / `busy`) are reserved for crowd levels only — don't reuse them for unrelated decoration.
-- **Dark mode** works by redefining these tokens in `src/index.css` (system preference, or `data-theme` set by `src/hooks/useTheme.ts`). So:
-  - Cards/sheets use `bg-surface`, never `bg-white` (only the QR code keeps a white background on purpose).
-  - Small green text on page/surface uses `text-calm-ink`; `calm-dark` is only for gradients behind white text.
-  - Modal backdrops use `bg-black/50`, never `bg-ink/…` (ink turns light in dark mode).
-  - New CSS colors go through `var(--color-…)`, not hex.
-- Never rely on color alone for status: pair it with a Hebrew label and/or icon.
+- **Fonts:** `IBM Plex Sans Hebrew` for all UI (`font-body`); `Secular One` (`font-display`) only for the big status word and the logo chip. Both load from Google Fonts in `index.html`.
+- **Color:** cool white surfaces + ink. **Crowd status is the only color** in the UI: `calm` (green), `moderate` (amber), `busy` (red), `closed` (gray). Small colored text uses the `*-ink` variants. Don't use status colors for decoration, and don't add a brand accent color.
+- Tokens live in `@theme` in `src/index.css` and are redefined for dark mode there. Components use tokens only (`bg-surface`, `text-muted`, …) — no hex in components.
+- Never rely on color alone for status: pair it with the Hebrew label (פנוי / בינוני / עמוס / סגור).
+- Map pins: rounded square = café, circle = cart.
 
 ## 4. Map RTL Fix (critical)
 
@@ -100,41 +81,34 @@ Never remove these rules, and never let the map container collapse to zero heigh
 
 ```
 src/
-  components/        # small, focused, reusable components (one per file)
-  hooks/             # app logic: useKafeStore (data + actions), useCartFilters, useSelection,
-                     # useAreaSearch, useAddCartFlow, useToast, useTheme, useMediaQuery, …
-  services/
-    repository.ts    # KafeRepository — the ONLY data boundary the app talks to (async)
-    localRepository.ts  # today's implementation, wraps cartService.ts (localStorage)
-    index.ts         # exports `repo` — switch implementations here
-    cartService.ts   # localStorage persistence + pure helpers
-  utils/             # pure logic (recommendations, clusters, search, forecast, share, …) + *.test.ts
-  data/              # seed carts, labels, regions, rewards
-  types/
-  App.tsx            # composes hooks + phone/desktop layouts only
-public/sw.js         # service worker (offline shell + tile cache), production builds only
+  lib/               # pure logic + data access, tested in lib.test.ts
+    overpass.ts      # cafés/carts from OSM (Overpass), 24h localStorage cache, mirror fallback
+    hours.ts         # small opening_hours parser (common OSM subset) + typical-hours fallback
+    busyness.ts      # status: live reports > learned profile > estimate; hourly forecast
+    backend.ts       # reports + user-added places: Supabase RPC, or localStorage when not configured
+    rank.ts          # list ordering + "calmer place nearby" suggestion
+    geo.ts, links.ts, storage.ts
+  hooks/             # usePlaces, useCrowd, useGeolocation, useNow, useViewport
+  components/        # MapView, Sheet, TopBar, PlaceList, PlaceDetail, HourChart, AddPlace, StatusTag, Toast
+  App.tsx            # composition + UI state only
+supabase/schema.sql  # tables locked (RLS, no policies); all access via SECURITY DEFINER functions
+public/_redirects    # Netlify proxy for Overpass mirrors + SPA fallback
+public/sw.js         # offline shell + small tile cache (production only)
 ```
 
-- **Modular components.** Keep components small and single-purpose; keep `App.tsx` as composition only — new logic goes in a hook.
-- **Data goes through `repo`** (`src/services/index.ts`). Screens and hooks never touch `localStorage` and never import `cartService` write functions directly. A future backend (e.g. Supabase) = a new `KafeRepository` implementation + switching `repo`; no UI changes.
-  - `cartService.ts`: namespaced, versioned keys (e.g. `kafe-panuy:v1:reports`); wrap every `localStorage` read/write in `try/catch` and fall back to seed data.
-  - Per-browser preferences (theme, welcome-seen) use their own keys and are not app data.
-- **Layouts:** phones (`< md`) get the app shell — full-screen map, floating search, bottom tabs (`BottomTabs`), sheets; desktop gets `Navbar` + list column + map. The map stays mounted across phone tabs; map moves while it's hidden are deferred until it's visible (see `MapController`).
-- **Smart alternatives**: recommendation logic lives in `src/utils/recommendations.ts`, not in UI components.
-- Shared types live in `src/types/`; no `any`.
+### Honesty rules (critical)
+- Every status shows its source: `live` (reports in the last 45 min), `learned` (past reports for that weekday/hour, ≥3 samples), `estimate` (Israeli weekday/hour pattern in `busyness.ts`), or `closed`. Never present an estimate as live, and never invent crowd data, ratings or reviews.
+- Guessed opening hours are labeled "שעות משוערות".
+- There is no free real-time crowd API; Google Popular Times has no official API and scraping it breaks its terms. Don't add scrapers. The Google Maps link is the free way to show Google's live busyness.
 
-### Cart data sources
-- Every cart has a `source`: `curated` (seed in `src/data/initialCarts.ts`), `osm` (imported), or `user` (added in the app), and a `region` (`sharon` | `north` | `center` | `south`).
-- **Curated seed:** coordinates were checked against OSM/Nominatim to be within ~2 km of their settlement. Ratings, hours, menus and crowd levels are demo values — don't present them as real.
-- **OSM import** (`src/services/osmImportService.ts`): free public Overpass API, no key. It's a shared service that is often slow (20–50 s per query) and sometimes "at capacity" — keep the search-area cap, the retry-with-backoff, and the 60 s timeout. Never import unnamed cafés, and never invent ratings for imported or user-added carts (`rating: 0, reviewCount: 0` = "חדש במפה"). Keep the "© OpenStreetMap contributors" attribution.
-- **Owner PIN** (`claimCart` / `verifyOwnerPin` in `cartService.ts`) is a client-only demo stand-in for real owner accounts — the hashed PIN lives in the browser, so it is not security. Real owner auth needs a backend; keep the in-app "מצב דמו" note until then.
-- **"Notify me when free"** only fires on changes this browser sees (reports, owner updates). Real push alerts need a server.
-- Map markers cluster below zoom 14 (`src/utils/clusters.ts`, no extra library).
-- Imported/user carts are stored with the curated ones under `kafe-panuy:v2:carts`; `addCarts()` skips duplicate ids and anything within ~40 m of an existing cart.
+### Data
+- Place keys: `osm:<type>/<id>` or `user:<uuid>`. The SQL validates this format.
+- Overpass is a shared free service: keep the search-size cap, the cache, and the mirror fallback. Keep the OSM attribution.
+- Supabase writes are rate-limited per anonymous device id in SQL. Never open direct table access or add permissive RLS policies.
 
 ## 6. Verification
 
-- **After completing every task, run `npm run build` and `npm test`** and confirm zero TypeScript/CSS errors and all tests passing. Add or update tests in `src/**/*.test.ts` when you change logic in `utils/` or `services/`.
-- The built-in Claude browser can't run service workers, and it pauses animations when the app window is hidden — check offline mode in real Chrome (`npm run build && npx vite preview`).
+- **After completing every task, run `npm run build` and `npm test`** and confirm zero TypeScript/CSS errors and all tests passing. Add or update tests in `src/**/*.test.ts` when you change logic in `lib/`.
+- If you change `supabase/schema.sql`, test it against a real Postgres (roles `anon`, `authenticated`): it must apply twice cleanly and anon must not be able to touch the tables directly.
 - If the build fails, fix it before reporting the task as done. Never claim success without a passing build.
 - Don't silence errors with `// @ts-ignore`, `any`, or by loosening `tsconfig` — fix the root cause.

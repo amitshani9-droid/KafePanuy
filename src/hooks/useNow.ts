@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react'
 
-/** Re-renders every `intervalMs` so time-based UI (deals, "updated X min ago") stays fresh. */
-export function useNow(intervalMs = 30_000) {
-  const [now, setNow] = useState(Date.now)
+/** Current time, refreshed every `ms` (default: each minute) */
+export function useNow(ms = 60_000): Date {
+  const [now, setNow] = useState(() => new Date())
   useEffect(() => {
-    const t = window.setInterval(() => setNow(Date.now()), intervalMs)
-    return () => window.clearInterval(t)
-  }, [intervalMs])
-  return [now, setNow] as const
+    const id = setInterval(() => setNow(new Date()), ms)
+    const onVisible = () => document.visibilityState === 'visible' && setNow(new Date())
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [ms])
+  return now
 }
