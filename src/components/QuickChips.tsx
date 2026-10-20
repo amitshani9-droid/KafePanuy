@@ -65,6 +65,13 @@ export default function QuickChips({ filters, onOpenFilters, showTags = false, f
       <Chip active={filters.onlyFree} onClick={() => filters.setOnlyFree(!filters.onlyFree)} floating={floating}>
         פנוי עכשיו 🟢
       </Chip>
+      <Chip
+        active={filters.activeTags.includes('saturday')}
+        onClick={() => filters.toggleTag('saturday')}
+        floating={floating}
+      >
+        פתוח בשבת ☀️
+      </Chip>
       <Chip active={filters.onlyDeals} onClick={() => filters.setOnlyDeals(!filters.onlyDeals)} floating={floating}>
         דילים חמים 🔥
         {filters.dealCount > 0 && !filters.onlyDeals && (

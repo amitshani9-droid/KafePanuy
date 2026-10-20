@@ -4,8 +4,8 @@ import { distanceKm } from './geo'
 import type { CoffeeCart, CrowdStatus, FieldReport, FlashDeal, Redemption, ReportInput, Reward } from '../types/cart'
 
 const KEYS = {
-  // v2: nationwide dataset — v1 held the old Emek Hefer-only seed
-  carts: 'kafe-panuy:v2:carts',
+  // v3: nationwide enriched dataset with 230+ real coffee carts across Israel
+  carts: 'kafe-panuy:v3:carts',
   points: 'kafe-panuy:v1:points',
   lifetimePoints: 'kafe-panuy:v1:lifetime-points',
   reports: 'kafe-panuy:v1:reports',
@@ -16,7 +16,12 @@ const KEYS = {
   owners: 'kafe-panuy:v1:owners',
 } as const
 
-const LEGACY_KEYS = ['kafe-panuy:v1:carts']
+const LEGACY_KEYS = ['kafe-panuy:v1:carts', 'kafe-panuy:v2:carts']
+try {
+  LEGACY_KEYS.forEach((k) => localStorage.removeItem(k))
+} catch {
+  // ignore storage errors
+}
 
 const STARTING_POINTS = 120
 /** Carts closer than this are treated as the same place when importing */

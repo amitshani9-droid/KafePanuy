@@ -1,6 +1,6 @@
 export type CrowdStatus = 'calm' | 'moderate' | 'busy'
 
-export type FilterTag = 'cyclist' | 'dogs' | 'kids' | 'shaded' | 'vegan'
+export type FilterTag = 'saturday' | 'cyclist' | 'dogs' | 'kids' | 'shaded' | 'vegan'
 
 /** 'live' = a recent field report; 'estimate' = predicted from typical busy hours */
 export type DataSource = 'live' | 'estimate'
