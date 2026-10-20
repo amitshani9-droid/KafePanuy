@@ -160,13 +160,13 @@ export default function CartDetailsDrawer({
       className="absolute inset-x-0 bottom-0 z-[1200] flex max-h-[85%] flex-col overflow-hidden rounded-t-[36px] bg-cream shadow-[0_-16px_50px_rgba(58,36,24,0.25)] animate-drawer-up md:inset-y-0 md:start-0 md:end-auto md:max-h-none md:w-[420px] md:rounded-none md:border-e md:border-forest/10 md:shadow-xl md:animate-drawer-side"
     >
       {/* Cover Image with gradient overlay and action buttons */}
-      <div className="relative h-52 w-full shrink-0 overflow-hidden bg-oat">
+      <div className="relative h-60 w-full shrink-0 overflow-hidden bg-oat">
         <img
           src={getCartPhoto(cart)}
           alt={cart.name}
           className="h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-cream via-black/25 to-black/60 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-cream via-cream/35 to-black/50 pointer-events-none" />
 
         {/* Grab handle (mobile) floating on image */}
         <div className="absolute top-2.5 inset-x-0 flex justify-center md:hidden" aria-hidden="true">
@@ -180,7 +180,7 @@ export default function CartDetailsDrawer({
             type="button"
             onClick={onClose}
             aria-label="סגור"
-            className="flex h-9 w-9 items-center justify-center rounded-2xl bg-black/40 backdrop-blur-md text-white shadow-xs hover:bg-black/60 active:scale-90 transition-all"
+            className="flex h-9 w-9 items-center justify-center rounded-2xl bg-black/45 backdrop-blur-md text-white shadow-sm hover:bg-black/65 active:scale-90 transition-all"
           >
             <X size={18} />
           </button>
@@ -189,8 +189,8 @@ export default function CartDetailsDrawer({
               type="button"
               onClick={onToggleWatch}
               aria-label={watching ? 'הפסק לעקוב' : 'קבל התראה כשיתפנה'}
-              className={`flex h-9 w-9 items-center justify-center rounded-2xl backdrop-blur-md shadow-xs active:scale-90 transition-all ${
-                watching ? 'bg-espresso text-white' : 'bg-black/40 text-white hover:bg-black/60'
+              className={`flex h-9 w-9 items-center justify-center rounded-2xl backdrop-blur-md shadow-sm active:scale-90 transition-all ${
+                watching ? 'bg-espresso text-white' : 'bg-black/45 text-white hover:bg-black/65'
               }`}
             >
               {watching ? <BellOff size={16} /> : <Bell size={16} />}
@@ -199,7 +199,7 @@ export default function CartDetailsDrawer({
               type="button"
               onClick={onShare}
               aria-label="שתף את העגלה"
-              className="flex h-9 w-9 items-center justify-center rounded-2xl bg-black/40 backdrop-blur-md text-white shadow-xs hover:bg-black/60 active:scale-90 transition-all"
+              className="flex h-9 w-9 items-center justify-center rounded-2xl bg-black/45 backdrop-blur-md text-white shadow-sm hover:bg-black/65 active:scale-90 transition-all"
             >
               <Share2 size={16} />
             </button>
@@ -209,12 +209,19 @@ export default function CartDetailsDrawer({
         {/* Bottom of hero photo: Cart Name & Area */}
         <div className="absolute bottom-2.5 inset-x-5">
           <h2 className="font-display text-3xl font-black text-forest drop-shadow-xs tracking-tight">{cart.name}</h2>
-          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-ink/80 font-medium">
-            <MapPin size={12} className="text-espresso" />
-            <span>{cart.area}</span>
+          <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink/80 font-medium">
+            <span className="flex items-center gap-1">
+              <MapPin size={12} className="text-espresso" />
+              <span>{cart.area}</span>
+            </span>
             {distanceKm !== null && (
-              <span className="rounded-full bg-surface/85 backdrop-blur-xs px-2 py-0.5 font-bold text-forest text-[11px] shadow-2xs">
+              <span className="rounded-full bg-surface/90 backdrop-blur-xs px-2.5 py-0.5 font-bold text-forest text-[11px] shadow-2xs">
                 {formatDistance(distanceKm)} ממך
+              </span>
+            )}
+            {cart.tags.includes('saturday') && (
+              <span className="rounded-full bg-amber-500/90 backdrop-blur-xs px-2.5 py-0.5 font-extrabold text-white text-[11px] shadow-2xs">
+                ☀️ פתוח בשבת
               </span>
             )}
           </p>
@@ -224,13 +231,17 @@ export default function CartDetailsDrawer({
       <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pt-3 pb-5 touch-scroll">
         {/* Status + wait */}
         <div className="flex items-stretch gap-3">
-          <div className={`flex flex-1 items-center gap-3.5 rounded-3xl p-3.5 shadow-xs ring-1 ring-black/5 ${status.softBgClass}`}>
-            <span className={`rounded-full px-3 py-1 text-xs font-bold text-white shadow-xs ${status.bgClass}`}>
+          <div className={`flex flex-1 items-center gap-3.5 rounded-3xl p-3.5 shadow-sm ring-1 ring-black/5 ${status.softBgClass}`}>
+            <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black text-white shadow-sm ${status.bgClass}`}>
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-white opacity-75 animate-ping" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
+              </span>
               {status.label}
             </span>
             <span className={`flex items-baseline gap-1.5 ${status.textClass}`}>
-              <span className="font-display text-3xl font-bold leading-none">{cart.waitMinutes}</span>
-              <span className="text-xs font-bold">דק׳ המתנה</span>
+              <span className="font-display text-3xl font-extrabold leading-none">{cart.waitMinutes}</span>
+              <span className="text-xs font-extrabold">דק׳ המתנה</span>
             </span>
           </div>
           <div className="flex flex-col items-center justify-center rounded-3xl bg-surface px-4 py-2 ring-1 ring-forest/10 shadow-xs">

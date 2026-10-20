@@ -280,8 +280,8 @@ export default function App() {
             onOpenRewards={() => setRewardsOpen(true)}
           />
           {/* RTL grid: list on the right, map on the left */}
-          <main className="relative grid min-h-0 flex-1 grid-cols-[400px_1fr] overflow-hidden">
-            <section aria-label="רשימת עגלות" className="min-h-0 border-e border-forest/10">
+          <main className="relative grid min-h-0 flex-1 grid-cols-[420px_1fr] overflow-hidden">
+            <section aria-label="רשימת עגלות" className="min-h-0 border-e border-forest/10 shadow-[4px_0_24px_rgba(58,36,24,0.03)] z-10">
               {listPanel('desktop')}
             </section>
             <section aria-label="מפת עגלות" className="h-full">

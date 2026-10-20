@@ -51,27 +51,34 @@ const CartCard = forwardRef<HTMLElement, CartCardProps>(function CartCard(
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none" />
 
           {/* Top Badges */}
-          <div className="absolute top-3 inset-x-3 flex items-center justify-between">
-            {/* Distance badge */}
-            {distanceKm !== null ? (
-              <span className="flex items-center gap-1 rounded-full bg-black/45 backdrop-blur-md px-2.5 py-1 text-[11px] font-bold text-white shadow-xs">
-                <MapPin size={11} className="text-espresso" />
-                {formatDistance(distanceKm)}
-              </span>
-            ) : (
-              <span />
-            )}
+          <div className="absolute top-3 inset-x-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              {/* Distance badge */}
+              {distanceKm !== null && (
+                <span className="flex items-center gap-1 rounded-full bg-black/55 backdrop-blur-md px-2.5 py-1 text-[11px] font-bold text-white shadow-xs">
+                  <MapPin size={11} className="text-amber-400" />
+                  {formatDistance(distanceKm)}
+                </span>
+              )}
+              {/* Saturday open badge */}
+              {cart.tags.includes('saturday') && (
+                <span className="flex items-center gap-1 rounded-full bg-amber-500/90 backdrop-blur-md px-2.5 py-1 text-[11px] font-extrabold text-white shadow-xs">
+                  <span>☀️</span>
+                  <span>פתוח בשבת</span>
+                </span>
+              )}
+            </div>
 
             {/* Wait status pill */}
             <span
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black text-white shadow-md backdrop-blur-md ${status.bgClass}`}
+              className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black text-white shadow-md backdrop-blur-md ${status.bgClass}`}
             >
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full rounded-full bg-white opacity-75 animate-ping" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
               </span>
               <span>{cart.waitMinutes} דק׳</span>
-              <span className="opacity-80">· {status.label}</span>
+              <span className="opacity-90">· {status.label}</span>
             </span>
           </div>
 
@@ -83,7 +90,7 @@ const CartCard = forwardRef<HTMLElement, CartCardProps>(function CartCard(
                 <span className="truncate max-w-[200px]">{deal.text}</span>
               </span>
             ) : cart.dataSource === 'live' && cart.verifiedGps ? (
-              <span className="flex items-center gap-1 rounded-full bg-calm/90 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold text-white shadow-xs">
+              <span className="flex items-center gap-1 rounded-full bg-emerald-600/90 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-extrabold text-white shadow-xs">
                 📍 מאומת מהשטח
               </span>
             ) : (
@@ -91,7 +98,7 @@ const CartCard = forwardRef<HTMLElement, CartCardProps>(function CartCard(
             )}
 
             {cart.reviewCount > 0 && (
-              <span className="flex items-center gap-1 rounded-full bg-black/50 backdrop-blur-md px-2 py-0.5 text-[11px] font-bold text-white">
+              <span className="flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-extrabold text-white shadow-xs">
                 <Star size={11} className="fill-amber-400 text-amber-400" />
                 <span>{cart.rating}</span>
                 <span className="text-white/70">({cart.reviewCount})</span>
